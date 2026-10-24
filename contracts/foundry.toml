@@ -1,0 +1,35 @@
+# Hypnexis W3-02 agent wallet: Foundry project (BUILD.md M0).
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.28"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+# Tests and scripts write metrics to <build root>/results only.
+fs_permissions = [{ access = "read-write", path = "../results" }]
+remappings = [
+  "forge-std/=lib/forge-std/src/",
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+  "account-abstraction/=lib/account-abstraction/contracts/",
+]
+
+[profile.default.invariant]
+runs = 32
+depth = 32
+
+[profile.default.lint]
+# Keep build/test output small; run `forge lint` explicitly when wanted.
+lint_on_build = false
+
+[profile.ci.invariant]
+runs = 64
+depth = 50
+
+# Long invariant campaign [E67].
+[profile.invariant.invariant]
+runs = 256
+depth = 100
