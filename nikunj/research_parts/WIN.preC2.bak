@@ -1,0 +1,167 @@
+# WIN: fumble map, default entry, differentiators
+
+Criteria are assumed, since no rubric has been published [P15][A1]: security correctness, demo, UX/product, code quality, novelty/presentation. With no published weights, each is weighted 1. There is no dataset [P15], so the evidence is E (research), P/A (statement and assumptions) and, later, X (the attack suite).
+
+## Step 1. Fumble map
+
+`common` = a fumble that most teams on this track will fall into (based on Baseline v0, the comparison table in RESEARCH.md, and the same-track competitor allowance.eth [E40]).
+
+| # | Fumble | How it costs points (criterion [P#]) | Evidence | Guard | Guard cost (h) |
+|---|---|---|---|---|---|
+| F1 | **common.** The account's ERC-1271 accepts the agent key, so x402 EIP-3009 / Permit2 signatures move USDC with no UserOp and every on-chain policy is skipped | Security: "must hold if the key leaks" [P3]; a protocol-literate judge breaks it in one question | [E20][E21][E22][E26] | **feature**: one-door `isValidSignature` (refuse the agent key; narrow x402 path that applies the policy) + **test** per side door | 10 |
+| F2 | **common.** Recipient checked as the call target only, so `USDC.transfer(attacker, x)` passes when USDC is allowlisted | Security; P7 "allowed recipients" | [E16][E40][E18] | **feature**: decode `to` for ERC-20 selectors + **test** | 3 |
+| F3 | **common.** Calendar-day bucket: 2x the daily cap around midnight | Security; P6 | [E14][E17] | **feature**: token bucket in execution + **test** (spend at 23:59 and 00:01) | 3 |
+| F4 | **common.** `block.timestamp` read in `validateUserOp`; bundlers reject the op, or the team only tests with a direct EntryPoint call | Code quality; demo breaks on a real bundler | [E2][E32] | **feature**: expiry via `validUntil`, time only in execution + **test** with bundler-spec-tests once | 2 |
+| F5 | **common.** `approve(spender, MAX)` launders the cap: the spender pulls later, outside the counter | Security; P5/P6 | T3 [E13] | **feature**: approve only to allowed spenders, allowance growth counted as spend (balance/allowance delta) + **test** | 3 |
+| F6 | Agent can call `executeBatch`, `delegatecall`, or the account itself (`upgradeTo`, setters) and rewrite the policy | Security; P3 | T6, T12 | **feature**: agent path = single `execute` to non-self target, no delegatecall + **test** | 2 |
+| F7 | Gas is a spend channel: a leaked key sets a huge `maxFeePerGas` and burns the prefund | Security; P3 | T5 | **feature**: per-op gas caps in validation + **test** | 2 |
+| F8 | **common.** "Owner approval" shows the agent's own description, so an injected agent words a malicious request to look benign | Security + UX; P9/P13 | [E26], T11 | **feature**: approval rendered only from decoded calldata and simulated outflow; owner signs callData hash + max outflow (EIP-712) | 6 |
+| F9 | Replay: owner approval valid on another chain, or across EntryPoint versions | Security; P11 | [E5][E4][E41] | **feature**: pin EntryPoint v0.8, EIP-712 domain with chainId + account + nonce + **test** (wrong chain, wrong EP, reused nonce) | 2 |
+| F10 | **common.** Security story leans on the LLM ("system prompt says never pay strangers") or on an injection detector | Security + novelty; judges have read "prompt injection" news | [E39][E23][E24] | **slide/answer**: "we assume the agent is fully hijacked; model defenses fail at >90% ASR [E39]" | 0.5 |
+| F11 | **common.** Policy lives in an off-chain server (CDP-style) or in the agent harness; a key/host leak bypasses it | Security; P3 | [E18][E19][E38][E35] | **scope cut** (no off-chain engine) + **slide**: comparison table row | 0.5 |
+| F12 | **common.** Demo is a happy path only: "agent buys a ticket". No attack shown, or one scripted attack | Demo + security | [E40] (7 happy/fail scripts, no attack suite) | **feature**: attack cards fired live at the hijacked agent and at a naive wallet side by side | 8 |
+| F13 | Claiming "zero loss": a hijacked agent can still overpay an allowed merchant up to the caps | Honesty under the hardest judge question | T10 (no source found) | **slide/answer**: claim bounded loss, state the bound (≤ dailyCap per 24 h per session key) | 0.5 |
+| F14 | Benchmark ASR presented as "funds safe": injection benchmarks mock finance tools | Security claims | [E27][E29] | **test**: every attack card maps to an on-chain outcome (refused / reverted / bounded loss) with a tx hash | 1 |
+| F15 | Spam the owner with approval requests (approval fatigue) | UX; P13 | T11 | **feature** (cheap): rate-limit pending requests per session key; **scope cut** anything fancier | 1 |
+| F16 | Trust-score gate fails open on a missing score, or a score loosens caps | Security, if TRACE is used | [E34], prior_work.md (extension.py:105-107) | **scope cut** to stretch; if used, escalate-only, allow-list ROUTE* only | 0.5 |
+| F17 | Mixed units: ETH and 6-decimal USDC under one cap; fee-on-transfer tokens | Security; P5 | T9 | **feature**: caps per asset, no oracle; only tracked assets are spendable by the agent | 1 |
+| F18 | Non-crypto judges cannot follow "ERC-4337 validateUserOp" | Demo + presentation; 15 PS across 6 tracks [P15] | [P15] | **slide**: one plain-words policy line ("$20/day, only these 3 shops, until Friday") + one scoreboard | 1 |
+
+## Step 2. The default entry (the bar to clear)
+
+Most W3-02 teams will ship: a SimpleAccount or Kernel/Smart Sessions account [E6][E7] with an agent session key, a target+selector allowlist, a per-tx cap on native value or the decoded ERC-20 amount, a daily counter reset per calendar day, `validUntil` expiry (or, worse, `block.timestamp` in validation), and an owner-signs-the-UserOp approval page that shows the agent's description. The demo is an LLM agent buying API credits or a ticket, plus one "attacker tells the agent to pay them" prompt that the allowlist rejects. Same-shape entries: Phylax SDK [E47], session-policy-wallet [E48], chaingpt-claude-skill [E49]. allowance.eth [E40] is the strongest known example of this shape and shows its typical gaps: targets only, no selectors, no decoded recipient, a guard the key can route around. The default entry falls into F1, F2 (often), F3, F5, F8, F10, F12 and F13.
+
+## Step 3. Candidates (from `adhd`, 5 isolated frames: attacker, regulator, game design, inversion, biology; 30 ideas)
+
+Scores: N = novelty, V = viability in 1 week, F = fit to the criteria. Clusters are grouped by underlying angle.
+
+**A. Meter the effect, not the calldata**
+- Balance-delta invariant: snapshot tracked balances and allowances, revert if net outflow > cap, whatever the calldata said (regulator, attacker) [N7 V8 F9]
+- Owner signs the outcome: approval binds callData hash + max outflow per asset; post-exec check enforces it (attacker) [N8 V7 F9]
+- Single USD budget over the whole portfolio via balance diff (attacker) [N7 V3 F6], **trap**: needs a price oracle, which hits T1/T9
+
+**B. One door: close the side doors**
+- `isValidSignature` hard-refuses the agent key; spend only via UserOp (inversion, biology) [N6 V9 F10]
+- Narrow x402 exception: parse the EIP-3009 typed data and apply the same policy, with the nonce pre-registered by a policy-checked UserOp (deepened) [N8 V7 F10]
+- Spend-path exhaustiveness: Foundry invariant "assets leave only through policy-checked execute" (regulator) [N6 V8 F9]; with Certora/Halmos [N7 V4 F8], **trap**: formal tooling cost
+- Just-in-time funding: the agent account holds 0 permit-able balance and pulls from an owner vault inside policy-checked execution (inversion) [N7 V6 F8]
+- Endospore sub-accounts: single-use spores funded with one per-tx limit (biology) [N8 V4 F7], **trap**: deploy and UX overhead, and it does not fix recipients
+
+**C. Untrusted narrator (approval UX)**
+- Approval screen built only from decoded calldata + simulated balance diff; the agent's text is shown struck through as "untrusted" (game, inversion, regulator, attacker, biology: 5/5 frames) [N5 V9 F9]
+- Rate-limited pending queue per session key [N3 V9 F6]
+
+**D. Proof as the demo**
+- Attack-card deck fired live by the judge; scoreboard "agent hypnotized: YES / funds beyond policy: 0" (game) [N7 V8 F9]
+- Leaked-key bounty: agent private key on screen, judges get 60 s to drain (game, inversion, attacker) [N8 V7 F8]
+- Side-by-side naive wallet that loses on the same cards (deepened) [N6 V8 F9]
+- Exploit corpus as a "compliance certificate": every known bypass shipped as a Foundry test (regulator) [N5 V9 F9]
+
+**E. Tripwires**
+- Canary recipient/selector: touching it freezes the session key and pings the owner (game, inversion, attacker, biology: 4/5 frames) [N7 V8 F6], with the caveat that it is detection, not prevention: an adaptive attacker who knows the canary avoids it [E39]
+
+**F. Trust- and time-shaped budgets**
+- Token-bucket "stamina bar" drawn live; midnight double-spend replay on a calendar wallet (game) [N5 V9 F8]
+- Probation tier for newly allowed recipients: tiny cap + 24 h cooldown (attacker) [N6 V7 F6]
+- Monotone ratchet: tightening instant, loosening only after an owner timelock (inversion) [N6 V7 F6]
+- Coagulation-style decaying charge with escalating co-signers (biology) [N6 V5 F5], which is a token bucket with more steps
+- TRACE XP: caps level up with clean history (game) [N6 V5 F4], **trap**: an off-chain score loosens on-chain caps, which breaks F16
+- Budget refills from x402 earnings (inversion) [N7 V3 F3], **trap**: off-topic complexity
+- Refundable escrow for in-policy payments (attacker) [N8 V3 F5], **trap**: x402 merchants and facilitators will not accept delayed settlement
+- Provenance-tagged UserOps: the agent commits the hash of the page that triggered it (regulator) [N7 V5 F4], **trap**: a hijacked agent self-reports, so the tag proves nothing
+
+**G. Audit trail**
+- Forensic decision log: every op emits policy hash + matched rule id + budget left (regulator) [N4 V9 F7]
+
+### Deepened branches (adhd Phase 2)
+
+These branches were sketched from model knowledge with no fetch. Lines marked (inferred) must be checked on day 1 of the build.
+
+**One door (B).**
+- **How it works.** ERC-1271 receives only the hash, so the account cannot read the typed data from it. The agent therefore sends an envelope: `(MODE_X402, to, value, validAfter, validBefore, nonce, agentSig)`. The account rebuilds the USDC EIP-3009 digest with `from = address(this)` and requires it to equal the hash. It then requires that the nonce was pre-registered as a voucher (payTo, maxValue, validBefore) by a policy-checked UserOp, and that UserOp already debited the budget at `maxValue`. Any other hash signed by the agent key returns `0xffffffff`; this covers EIP-2612, Permit2 and marketplace orders. Only the owner gets general 1271.
+- **Replay.** Cross-chain and cross-account replay are closed by the token's EIP-712 domain (chainId, verifying contract), by `from == this`, and by per-chain voucher storage (inferred).
+- **Variation.** A voucher book: one UserOp registers a Merkle root of N vouchers and debits their sum, so x402 latency is paid once per batch.
+- **Load-bearing risk.** Facilitator and client compatibility. The x402 client must sign with a pre-registered nonce instead of a random one, and the facilitator must pass a non-65-byte contract signature to the `bytes` overload of `transferWithAuthorization` (inferred).
+- **Day-1 test.** On a Base fork, a naive account that accepts the agent key in 1271 loses USDC to `transferWithAuthorization` with zero UserOps. Then run the x402 facilitator's verify against the same signature.
+
+**Meter the effect (A).**
+- **How it works.** SimpleAccount v0.8 plus `executeUserOp`. First, a boundary filter: deny-by-default targets; no self-calls, delegatecall, `setApprovalForAll` or `EntryPoint.withdrawTo`; tracked tokens allow only transfer/approve with a decoded recipient. Then snapshot the native balance, the EntryPoint deposit, the tracked ERC-20 balances and the allowances to known spenders (Permit2 included). Run the call, take the positive deltas, and revert on per-tx cap, allowance growth or token-bucket underflow. `block.timestamp` is read only here.
+- **Why it holds.** Fee-on-transfer is counted conservatively. Reentrancy cannot re-enter `execute` (EntryPoint-only), and 1271 is locked while a call runs.
+- **Cost.** About 60-90k gas of overhead for 3 tokens and 4 spenders (inferred).
+- **Load-bearing risk.** Completeness of the metered set. Any value door outside the snapshot bypasses it silently, so the guarantee rests on deny-by-default targets plus the 1271 lockdown plus EntryPoint-deposit tracking.
+- **Children.** Two-sided outcome bounds (`minIn`: "if USDC leaves, at least X arrives") give oracle-free slippage and hidden-recipient protection. A gas credit is debited in validation from the account's own storage and refilled in execution.
+
+**Attack-card demo (D).**
+- **How it works.** Each card is one Foundry test with `expectNaiveLoss > 0` and `expectHardenedLoss == 0`, fired at the hardened account and at a naive account built from a stock default config, named, so it is not a strawman. Every card has two shooters:
+  - the open-weight LLM fed a poisoned page, which is stochastic and fills only the "agent hypnotized" column;
+  - a raw-key script holding the leaked agent key, which is deterministic and is the ground truth for "funds beyond policy: 0".
+- **Demo design trap.** An op rejected in `validateUserOp` never lands on-chain, so there is no explorer link. Cards meant to be shown on-chain should fail in execution instead: the op lands with `success=false`.
+- **Midnight card.** Shown on a fork with `vm.warp`.
+- **Fallbacks.** Live Base Sepolia via a bundler, then direct `handleOps` from an EOA, then the anvil fork, then pre-landed tx hashes for the video.
+- **Load-bearing risk.** Credibility. If the naive wallet looks like a strawman, or the LLM visibly refuses half the injections, judges read it as staged. So lead with the deterministic column.
+
+## Step 4. Score
+
+Weight 1 per criterion (A1). Points 0-3 vs the default entry. Value = Σ points; value/effort = value ÷ person-days.
+
+| Candidate | Security | Demo | UX | Code | Novelty | Value | Visible <30 s? | Effort (pd) | Risk | Value/effort |
+|---|---|---|---|---|---|---|---|---|---|---|
+| C1 One door (1271 refuse + policy-checked x402 path) | 3 | 2 | 0 | 2 | 3 | 10 | yes: "x402 drain via signature" card, naive wallet loses USDC, ours refuses | 2.5 | facilitator must accept a contract sig (USDC does [E21]); nonce pre-registration adds one UserOp per x402 payment | 4.0 |
+| C2 Effect metering (balance + allowance delta) | 3 | 1 | 0 | 2 | 2 | 8 | yes, with a card: allowed merchant `buy()` that secretly pulls 10x | 2 | gas cost; untracked assets; reentrancy during the call | 4.0 |
+| C3 Sign the outcome (approval binds callData hash + max outflow) | 2 | 2 | 3 | 1 | 2 | 10 | yes: the approval screen shows "−$40 USDC to 0xabc (not in your list)"; agent text struck through | 2 | simulation needs an RPC; it is a UI risk, not a safety one (the post-check enforces the bound) | 5.0 |
+| C4 Attack-card deck + side-by-side naive wallet + scoreboard | 2 | 3 | 2 | 1 | 1 | 9 | yes (it is the demo) | 2.5 | live LLM nondeterminism; testnet/bundler latency | 3.6 |
+| C5 Leaked-key bounty on stage | 1 | 3 | 0 | 0 | 2 | 6 | yes | 0.5 | judges will not actually try; works as a 10 s video beat | 12.0 |
+| C6 Token-bucket stamina bar + midnight replay | 1 | 2 | 2 | 1 | 0 | 6 | yes | 0.75 | none | 8.0 |
+| C7 Canary tripwire freeze | 1 | 2 | 1 | 0 | 1 | 5 | yes | 0.75 | detection only; adaptive attacker avoids it | 6.7 |
+| C8 Exploit corpus as Foundry tests (X1) | 3 | 1 | 0 | 3 | 1 | 8 | partly (CI badge, test list in README) | 2 | none | 4.0 |
+| C9 Forensic decision log events | 1 | 0 | 1 | 1 | 0 | 3 | no | 0.25 | none | fold into guard |
+| C10 Monotone ratchet (loosen behind timelock) | 1 | 0 | 1 | 0 | 1 | 3 | no | 0.5 | UX friction | fold into guard |
+| C11 Probation tier for new recipients | 1 | 0 | 0 | 0 | 1 | 2 | no | 0.75 | complexity | cut |
+| C12 TRACE escalate-only recipient risk | 1 | 1 | 1 | 0 | 2 | 5 | yes, if a "low-trust shop → owner approval" card exists | 1.5 | network dependency; must fail closed | 3.3 |
+
+## Step 5. Pick
+
+**Cover first.** These reach the top-3 bar from the REQUIREMENTS ambition check: guards F2-F9, F14, F15, F17 (in-account features with one test each), C8 (attack corpus = X1 metric), C6 (token bucket, shown as a bar), C3's UI half (decoded approval screen) and C4 (attack-card demo). Together they cover security, demo, UX and code.
+
+**Then spike (differentiators a judge sees in under 30 s):**
+1. **One door [C1, with C2 as its execution-side twin].** "Every dollar leaves through one door, and that door checks the policy." The x402 signature card is the moment: the naive wallet loses USDC to an EIP-3009 signature with no UserOp, while ours refuses unless the payment fits the policy. It guards the top fumble F1, which the default entry falls into, and it hits the user's own x402 stack [A5]. Effect metering (C2) is the same promise on the UserOp path: the cap counts what actually left, not what the calldata claimed.
+2. **Sign the outcome [C3].** The owner approves "−$40 USDC to 0xabc, once, by Friday", built from decoded calldata and simulation, never from the agent's words. The contract enforces that bound after execution. This guards F8, the approval half of the PS [P9][P13], and gives non-crypto judges something to look at.
+
+**Honesty test.**
+- One door: "Can a hijacked agent still lose money?" Yes, up to the caps, to allowed recipients (F13). "Does x402 still work?" Yes, for allowed payees within the caps; one extra registration UserOp per payment (or per batch of nonces) is the price. "What if a token we don't track is drained?" The agent path can only touch tracked assets and allowed targets; untracked tokens are out of the agent's reach by allowlist, not by metering.
+- Sign the outcome: "What if the simulation is wrong?" The post-execution check reverts if the real outflow exceeds the signed bound, so a bad simulation can only cause a failed tx, never an overspend.
+- Both survive. C7 (canary) does not fully survive "an adaptive attacker avoids it" [E39], so it is a stretch beat, not a differentiator.
+
+## Step 6. Light prior check (full log in NOVELTY.md)
+
+- **One door.** The premise is confirmed: Permit2 and USDC v2.2 EIP-3009 call the payer account's `isValidSignature`, and x402 docs call an account that accepts a raw controlling-key signature there "permissive" [E42][E43]. The EIP-3009 path needs no prior approval. The Permit2 path still needs an on-chain `approve` to Permit2 through `execute` [E42], which the allowance-delta check meters.
+  - Closest prior work we found is Smart Sessions [E7]. It offers an ERC-1271 policy type per session.
+  - It differs in that its README shows no policy that decodes EIP-3009 fields, charges them to the same budget as UserOp spends, needs a nonce pre-registered by a UserOp, or refuses the session key on every other 1271 request. Its source was not read, so treat this as "not shown", not "absent".
+- **Meter the effect / sign the outcome.**
+  - Closest prior work we found is PACE [E46]. Signed policy records bind intent, policy and a simulation report to the exact execution bytes: 0.00 vs 0.80 unsafe-execution rate in a deterministic sandbox.
+  - It differs in that it trusts the off-chain simulation. We measure the real balance and allowance deltas in execution, and the owner signs a max outflow per asset.
+  - The post-execution hook slot itself is established prior art: Safe `checkAfterExecution` [E45], and Uniswap `afterExecute`, which lists "Spending limits" as a use [E44].
+- **Competitors.** Phylax SDK [E47] (ERC-4337, session keys, recipient and contract guardrails), session-policy-wallet [E48] and chaingpt-claude-skill [E49] all claim agent-drain protection. Only their descriptions were read, so the pitch shows the x402 signature attack live instead of claiming that they fail it. This raises the default entry: assume competitors also decode recipients, so the 1271 door and effect metering are what separate us.
+
+## Step 7. Scope cut
+
+Time: 1 week+, 2-4 people [P16]. Plan ~80% for the build, ~20% for polish, video and buffer. Estimated build: guards ~4 pd, C1+C2 ~4.5 pd, C3 ~2 pd, C4+C6 ~3.25 pd, C8 ~2 pd = ~16 pd, which fits 3 people × 7 days × 0.8 ≈ 17 pd. With 2 people, cut C2 to "decoded amount + allowance delta only" and drop C6's animation.
+
+| Cut | Why |
+|---|---|
+| USD portfolio budget / price oracle | Oracle reads are banned in validation (T1) and add unit risk (T9); per-asset caps are enough |
+| Formal verification (Certora/Halmos) | Days of setup that no generalist judge sees; Foundry invariants cover the claim |
+| Endospore sub-accounts | Deploy and UX overhead; does not fix recipients |
+| Refundable escrow | x402 settlement is immediate; merchants will not accept clawbacks |
+| Provenance-tagged UserOps | A hijacked agent self-reports, so the tag proves nothing |
+| TRACE XP / earned budgets | An off-chain score must never loosen on-chain caps (F16) |
+| TRACE escalate-only gate | **Stretch**: only after the demo path works, and fail-closed |
+| Canary tripwire | **Stretch**: one 10-second demo beat at most; detection, not prevention |
+| Full ERC-7579 module conformance + install on Nexus | **Stretch**: code-quality bonus, invisible in the demo |
+| Probation tiers, monotone ratchet | Invisible in the demo; fold the ratchet into "loosening needs the owner key" (already true) |
+| Mainnet deployment | Testnet is enough [A2]; one optional mainnet x402 receipt |
+| Agent-side injection defenses | By design: the wallet must hold with a fully hijacked agent [E39] |
+
+## Optional spike
+
+Skipped. Foundry is not installed on this machine, and there is no dataset [P15]. The first build task (Phase E) is the spike: a Foundry test where a naive account that accepts the agent key in `isValidSignature` loses USDC to an EIP-3009 `transferWithAuthorization` with no UserOp, and the one-door account refuses. It will be logged as X2.

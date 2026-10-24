@@ -1,0 +1,24 @@
+# Experiments
+
+No dataset [P15]. Experiments are attack-suite runs, logged here during the build (Phase E). Nothing below has been run yet. Status lines say so.
+
+## X1 Attack-suite score (the headline metric)
+Definition. A fixed deck of attack cards. Each card is one Foundry test with two expectations: `naiveLoss > 0` on a stock default-config session-key wallet, and `hardenedLoss == 0 beyond policy` on ours. Every card is fired by two shooters:
+- raw-key script holding the leaked agent key (deterministic; this column is the ground truth);
+- open-weight LLM agent fed a poisoned page (stochastic; fills only the "agent hypnotized" column).
+Reported units. (a) cards where our loss beyond policy is 0, out of all cards, raw-key shooter, one run each (deterministic); (b) the same for the naive wallet; (c) LLM column as k/n runs per card, mean over runs, never the best run; (d) the stated bound: total agent outflow per asset in any 24 h window <= that asset's account-wide globalCap (all session keys together) and <= each key's dailyCap, checked by Foundry invariant tests; (e) live projector run (C7, Base Sepolia, fresh key shown to judges): raw counts of attempts (UserOps and signatures submitted) and of funds moved beyond policy, one event, not a rate. In-policy spend at allowed shops is reported in its own column.
+Caveat. The deck is written by us, so it is self-graded. The naive wallet and the card list are published in the repo so judges can add cards.
+Status: planned, not run.
+
+## X2 Spike: ERC-1271 side door
+Definition. On a Base fork: a naive 4337 account whose `isValidSignature` accepts the agent key loses USDC to EIP-3009 `transferWithAuthorization` with zero UserOps; the one-door account returns `0xffffffff` for the same signature and accepts only a policy-checked, pre-registered envelope.
+Status: planned, not run (Foundry not installed on the planning machine). First build task.
+
+## X3 Mainnet x402 payment with a contract signature (decides A10 and the 1271 mode)
+Definition. On Base mainnet: deploy the agent account from the owner's MetaMask (the owner key never leaves MetaMask), fund it with about 1 USDC, and give it a fresh agent key with a tiny policy (recipient set = the TRACE payTo address only, perTxCap 0.01 USDC, dailyCap 0.05 USDC, 1271 mode = owner + x402 voucher). Register one voucher with a policy-checked UserOp, then have the agent's x402 client pay the user's live TRACE endpoint (`POST /v1/x402/score`, $0.005 USDC, exact scheme [A13]) with the one-door envelope as the contract signature.
+Pass. The endpoint returns 200 with a settlement receipt; Basescan shows a USDC transfer from the agent account to payTo for 5000 base units; the account's bucket is debited once; a second payment with the same nonce is refused; an agent signature with no voucher returns 0xffffffff from `isValidSignature`.
+Fail modes, each recorded. Facilitator rejects a non-65-byte contract signature, or the client cannot sign with a pre-chosen nonce (A10 false); no v0.8 bundler on Base mainnet (then `handleOps` from an EOA); no Base ETH (A14).
+Decision. Pass: ship 1271 mode "owner + x402 voucher" as an opt-in, and put the receipt link on the slide. Fail: 1271 stays owner-only and x402 runs through the float fallback (IDEA.md section 11). The side-door card (X2) holds either way.
+Honest unit. One real payment of $0.005 to the user's own endpoint. It proves that a contract signature settles through a real facilitator, not that strangers' merchants accept it; the payer and payee belong to the same person.
+Safety. Unaudited contract, so the mainnet account holds only the 1 USDC top-up (allowance-wallet rule). The MetaMask seed is never in `.env`, the repo, the agent host or on the projector.
+Status: planned, not run. No transaction has been made.

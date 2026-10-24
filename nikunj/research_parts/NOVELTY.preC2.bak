@@ -1,0 +1,64 @@
+# NOVELTY — W3-02 Agent Wallet (prior-art check, 2026-10-24)
+
+Engines used: web search, arXiv API, Europe PMC (returned HTTP 503 "Search service is temporarily unavailable", so no results), GitHub REST search. Semantic Scholar was not used. I fetched every cited page myself. Tags are RESEARCH.md ids after the merge. SmartSession (E7) was a duplicate of [E7], so it was dropped and [E7] is cited instead.
+
+## D1 — "One door": ERC-1271 refuses the session key except a policed x402 / EIP-3009 path
+
+Queries run (verbatim):
+- web: `session key isValidSignature ERC-1271 policy Smart Sessions permit drain`
+- web: `x402 smart account ERC-1271 EIP-3009 transferWithAuthorization ERC-6492 support`
+
+Top hits:
+- Wallet compatibility (x402 docs): https://docs.x402.org/advanced-concepts/wallet-compatibility.md [E42]
+- SmartSession README (Rhinestone + Biconomy): https://raw.githubusercontent.com/erc7579/smartsessions/main/README.md [E7]
+- ERC-7598: Use contract signature for signed transfer: https://eips.ethereum.org/EIPS/eip-7598 [E43]
+- Smart Session Policies - Biconomy Docs: https://docs.biconomy.io/new/smart-sessions/policies (fetched; the policy list covers actions, ERC-20 limits and value limits; no usable 1271 text was found in the static page)
+- Making x402 Programmable with Smart Accounts | Nevermined: https://nevermined.ai/blog/making-x402-programmable (fetched; covers x402 plus smart accounts in general, no session-key 1271 policy)
+
+The threat is real, and the sources confirm it. Permit2 and USDC v2.2 EIP-3009 call the payer account's `isValidSignature` [E42][E43]. The x402 docs define a "permissive" ERC-4337 account as one whose `isValidSignature` accepts a raw ECDSA signature from the controlling key [E42]. A key that passes there can pay through a facilitator without ever submitting a UserOp.
+
+Closest prior work we found is SmartSession [E7]. It lists "ERC-1271 signature validation" as its own session policy type, and it uses ERC-7739 nested typed data. It differs in what the README shows. The module provides a generic per-session 1271 policy hook. The README does not show a policy that:
+- decodes EIP-3009 TransferWithAuthorization fields (to, value, validBefore, nonce);
+- charges them against the same recipient allowlist, per-tx cap and rolling daily budget that UserOp spends use;
+- requires the authorization nonce to be pre-registered in a UserOp first;
+- defaults to refusing the session key on every other 1271 request.
+
+I did not read the SmartSession source, so a policy contract with some of this may exist. Treat this difference as "not shown", not "absent".
+
+## D2 — "Meter the effect": execution-phase balance/allowance delta caps + owner signs the outcome
+
+Queries run (verbatim):
+- web: `smart account spending limit balance delta post-execution hook ERC-7579 checkAfterExecution`
+- web: `"asset delta" OR "balance change" enforcement wallet sign outcome intent simulation guard`
+- arXiv API: `abs:"smart account" AND abs:agent` (sorted by date); `abs:"session key" AND abs:wallet`
+- Europe PMC: `"smart contract wallet" AND agent` (HTTP 503, no results)
+
+Top hits:
+- PACE: Policy-Attested Contract Execution for Safe AI Agents in Decentralized Finance (arXiv 2608.17220, 2026): https://arxiv.org/abs/2608.17220v1 [E46]
+- Smart Wallet Hooks (Uniswap): https://developers.uniswap.org/docs/protocols/smart-wallet/concepts/hooks.md [E44]
+- Safe GuardManager.sol (`checkAfterExecution`): https://raw.githubusercontent.com/safe-global/safe-smart-account/main/contracts/base/GuardManager.sol [E45]
+- The simulation-preview hits (OneKey, Dynamic, Fireblocks, Alchemy) are off-chain previews and are not cited. The search tool's summary notes they show balance changes but do not enforce them on-chain.
+
+Closest prior work we found is PACE [E46]. Its signed Policy Decision Records bind the approved intent, policy and simulation report to the exact execution bytes. A smart account verifies them on-chain at 29,826-31,822 gas, and the paper reports a 0.00 unsafe-execution rate vs 0.80 unguarded in a deterministic sandbox. It differs from D2 in three ways:
+- PACE trusts an off-chain simulation and binds it to the bytes. D2 measures the real token balance and allowance deltas inside execution and reverts if they exceed the cap, whatever the calldata decodes to.
+- The owner signs a maximum outflow per asset bound to the callData hash, not a simulation report.
+- Rolling daily caps are charged from the measured delta.
+
+The execution-hook slot itself is established prior art. Safe guards run post-checks (`checkAfterExecution`) [E45], and Uniswap per-key `afterExecute` hooks list "Spending limits" as a use case [E44]. Neither source shows a delta-metering spend cap that also counts allowance changes.
+
+## Competitors (2025-2026 hackathon / GitHub)
+
+Queries run (verbatim):
+- web: `AI agent wallet ERC-4337 session key policy prompt injection hackathon ETHGlobal 2026`
+- GitHub API: `agent wallet session key policy pushed:>2025-01-01` (3 repos); `erc-4337 agent prompt injection pushed:>2025-01-01` (1 repo)
+
+Findings (allowance.eth skipped as instructed):
+- Phylax SDK - HackQuest [E47] is the closest competitor. It combines ERC-4337, delegated session keys and recipient/contract policy guardrails for AI agents. Its listing does not mention the ERC-1271/x402 path or delta metering.
+- Ramprasad4121/session-policy-wallet [E48] (Monad, 2026) offers session keys with on-chain spend limits and contract allowlists against agent drains.
+- ChainGPT-org/chaingpt-claude-skill [E49] (2026) markets an ERC-4337 agent wallet with per-tx and daily caps that "prompt injection can't drain".
+- Not ERC-4337, so not given entries: keep-starknet-strange/starkclaw (Starknet agent wallet, session keys plus policy guardrails) and trionlabs/maestro (Solana agentic policy engine).
+
+For E47-E49 I only read the descriptions or listing, not the code. Whether any of them guards `isValidSignature` is unknown. The pitch should show the attack live: a leaked key signs an x402 Permit2/EIP-3009 payment with no UserOp. Do not claim that competitors fail it.
+
+## Phase D re-run note (C0, C17)
+Per-parameter rules are not novel: Kernel call policy has per-argument operators [E50] and Smart Sessions UniActionPolicy has ParamRule with IN_RANGE [E51], besides Zodiac Roles [E16]. They are a gap fix in IDEA.md, not a differentiator. MetaMask Advanced Permissions (ERC-7715) [E54] is prior art for the request surface; its page shows token permission types only and nothing about the account's 1271 path. D1 and D2 claims unchanged ("not shown", never "first").

@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+  - services/*
+  - agent
+# pnpm 11 asks for an explicit decision per dependency build script.
+allowBuilds:
+  esbuild: true
+
+# sim/ is a standalone npm project (vendored Trace_CIKM fork), not a workspace member.

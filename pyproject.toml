@@ -1,0 +1,15 @@
+[project]
+name = "hypnexis-tools"
+version = "0.0.0"
+description = "Analysis and acceptance tooling for the Hypnexis W3-02 agent wallet (sim analysis, results tables)."
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=1.26",
+  "scipy>=1.11",
+  "matplotlib>=3.8",
+  "pandas>=2.1",
+]
+
+[tool.uv]
+# Not a package: uv only manages the environment. tools/*.py acceptance scripts use the stdlib only.
+package = false

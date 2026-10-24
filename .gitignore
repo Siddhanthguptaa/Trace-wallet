@@ -1,0 +1,35 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# node
+node_modules/
+*.tsbuildinfo
+
+# foundry
+contracts/out*/
+contracts/cache*/
+contracts/broadcast*/
+out*/
+cache*/
+broadcast*/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# services
+*.sqlite
+*.sqlite-journal
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# logs & scratch
+*.log
+*_slow.txt

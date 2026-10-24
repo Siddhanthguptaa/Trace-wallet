@@ -1,0 +1,46 @@
+# STATE
+Mode: execute     Goal: hackathon
+Problem: W3-02 Agent Wallet: ERC-4337 wallet; agent key spends only within owner policy (contracts/fns, per-tx, daily, recipients, expiry, owner approval); must hold if key leaks or agent injected.
+Event/track: Hypnexis / Track 02 Web3 / W3-02. Duration/team/compute: 1 week+ / 2-4, strong Solidity / laptop (A6)
+Data: none. Statement: statement.md. Reqs: REQUIREMENTS.md. Assumptions: ASSUMPTIONS.md (A1-A23)
+Constraints: TRACE paper (user author) https://zenodo.org/records/22706499; context read-only: D:\sats_router, D:\trace-api. BUILD = BACKEND ONLY (contracts, services, agent/attack harness, sim X4; no frontend), multi-milestone. Builder = one subagent per phase/milestone (user 2026-10-24). Build root: C:\Users\siddh\Downloads\Hypnexis\Hypnexis (never inside nikunj/). Downloads\AGENTS.md = AgentCredit (other project). Shell: prefix `rtk`.
+Judging: not released (A1)
+
+## Phase A: done
+## Phase B: done
+## Phase C: done-partial (stopped by user)
+## Phase D: done (no red team/checkers, user)
+## Approval: yes (user 2026-10-24): build backend only (IDEA.md s10 M0-M9), with subagents, in phases. X3 = user-run.
+## Phase E: done
+## Fast plan: nikunj/FASTPLAN.md overrides BUILD.md order + cuts (user: parallel + cuts, no commits, all in root, log decisions in DECISIONS.md). Lanes: SIM, CORE, ATT, D2, D1, D3, APPC, APPS, HARN, INT, X1, M9.
+
+## M0: done | X2 fork @53026000: naive lost 100000000, one door 0 (0xffffffff), 0 UserOps; toolchain ok; shared 14 passed; forge 11 passed; gate ok
+## M1: done | core 14,454 B (10.1 KB left) + admin 20,349 B, module stubs Meter/OneDoor/PayeeTier/Approval/Freeze/Recovery + sandbox + paymaster gate + full Buckets + docs/api.md (hooks, slots, reasons 0-20, typed data, ownership); forge_summary: 115 passed, 0 failed (results/forge_m1.json); m1 cards ok (R2 ticket 2000000 lost, R3 0 beyond on all 5; results/cards/). Deferred (packages/, tools/ off-limits during M0): shared ABIs/typed-data/Submitter + beat 10_core (vectors: results/m1_typed_data_vectors.json); pnpm shared test + Gate G left to INT (FASTPLAN rule 6).
+## M2: done | MeterLib (external, 5,863 B) measured balance+allowance deltas, prepaid allowance counted once, per-tx/key/global/explore debits, APPROVAL track measured not charged; stack-too-deep fixed (ORCH2); 31 passed (results/forge_m2.json, forge_summary_m2.json), CI I1/I5/I6 64x50 ok; meterOverheadGas 155,808 (results/gas_m2.json, incl. bucket debits); cards -> X1.
+## M3: done | OneDoorModule + external OneDoorLib (5,403 B): owner-only 1271, x402 voucher envelope, REGISTER_VOUCHER (TTL<=600 s), reclaim, exec lock; 38 passed incl. I3/I4 (results/forge_m3.json, forge_summary_m3.json), CI 64x50 ok; X2 on real AgentAccount: lost 0, naive 100000000, 0 UserOps (results/forge_m3_fork.json, x2_spike.json); card x402_side_door -> X1; beat 30_one_door -> INT.
+## M4: D3: done | PayeeTierModule filled (attestation ecrecover in account domain at attestEpoch, validUntil folded, 0 refused, no TIMESTAMP; flag > listed > attested > explore; EXPLORE_PER_TX from self-decoded amount); core +1,069 B measured fill-vs-stub (budget 2.0 KB, no lib); forge_summary: 46 passed, 0 failed (results/forge_m4_d3.json; F24-F27, F31, I7-I10 incl. ATT vectors); whole-tree build ok. REQUESTS in DECISIONS.md (2 M1 "before M4" asserts -> EXPLORE_PER_TX; cards/R4 to X1/INT).
+## M5: APPC: done | ApprovalModule + external linked ApprovalLib (core +772 B measured fill-vs-stub, budget 1.5 KB; INT must deploy+link ApprovalLib) + src/lens/PolicyLens.sol (12 codes); forge_summary: 34 passed, 0 failed (results/forge_m5_appc.json); breach = success+PolicyBlocked; REQUESTS in DECISIONS.md (D2 must return outflows on APPROVAL track; cards + api.md rows to X1/APPS/INT).
+## M6: SIM: done | sim/ fork runs (Node 24, offline deps); repro gate PASS mean 3.4 sd 3.86 vs Table 1 4.7±4.3 (sim/results/repro_table1.json); ~51 s, 1.3 GB/cell. ATT: done | attestor tests 36 passed (port == vendored fork to 1e-12 incl. DB pipelines; D3 vectors contracts/test/vectors/score_attestation.json == TypedData.sol on anvil); stub e2e ok (results/m6_attestor_e2e_stub.json); API = docs/api.md s15 (copy services/attestor/API.md). For INT: real-account e2e via E2E_TARGET_MODULE -> results/m6_attestor_e2e.json, re-merge API.md if s15 lost, add shared "./attestor" export; no new deps.
+## M7: done (pending final reruns) | tools + shooters: TS raw-key shooter 13 cards x R1-R4 = 49 cells, 0 errors (results/x1_shooter.json), Foundry reader 49 cells / 50 tests (results/cards/, x1_table.json), x1_agree 0 disagreements on the compared cells; LLM shooter (qwen2.5-coder:7b via Ollama, 4 configs x 4 injection cards x n=5) -> results/x1_llm.json; harness fixes: tools.check() now calls PolicyLens, pinned freeze thresholds applied to every AgentAccount, x402 TTL 300 s, attacker txs awaited.
+## M8: done | X4 partitioned-only 360/360 cells; H1 = false (EB(5%) moves frontier 0/4 attacks; results/x4_h1.json) -> pitch hard bound only; docs/x4_report.md; sim tests 52 passed; mem backend gate 48/48 + repro 10/10 identical.
+## M9: in progress (INT + DOCS forks) | I11 authorization fuzz done (results/forge_i11.json, results/i11.json); deploy/X3/rig/slither/THREAT_MODEL/README/check_claims by forks.
+## M10: done | FreezeModule T1-T4 + watcher service; forge 25 + I13; watcher 29/29; X6 scored run (seeds 42-61 x 4 detector modes x 13 cells = 1,040 runs): combined detection 116/120 (96.7%), containment 180/180, false freezes 0/80, max gain 17.96 USDC <= 20 USDC cap; thresholds pinned on dev seeds (S2 velocityBps 6000, spend-CUSUM h 0.5).
+## M11: done | RecoveryModule: exactly 5 guardians/thr 3, msg.sender approvals bound to chain+account+proposal id, 48 h from proposal, owner veto until exec, one live proposal (stale-after-48h replace + proposer bar), exec = _applyRecovery only (no funds); admin 22,685 B (1,891 left; REC ~2.0 KB; AgentAccountAdmin.sol not edited). Acceptance: `forge test --match-path 'test/unit/M11_*' --json > results/forge_m11.json; python tools/forge_summary.py results/forge_m11.json --out results/forge_summary_m11.json --require test_setGuardians_,test_propose_,test_approve_,test_replay_,test_execute_twoOfFiveFails,test_execute_beforeDelayFails,test_veto_,test_size_,invariant_I12` -> 30 passed, 0 failed; I12 64x96: 14 recoveries, 0 violations (results/m11_i12.json); `forge build --sizes --skip test` ok; whole-tree `forge build` ok (retry after M4 test fix). For INT: retire M1_Sandbox test_recovery_stubs; api.md errors/events (DECISIONS [REC]).
+## M12: done | AgentPaymaster (BasePaymaster v0.8, staked, owner-registered agents, lib/Buckets quota in wei, global gas caps + postOp floor, per-sender pending hold in validation with TIMESTAMP-free validAfter admission, postOp Buckets.tryDebit of charged only; 8,425 B) + TS helper packages/shared/src/paymaster (paymasterAndData, prefund, caps, admission, ABI). Acceptance: `forge test --match-path 'test/unit/M12_*' --json > results/forge_m12.json; python tools/forge_summary.py results/forge_m12.json --out results/forge_summary_m12.json --require test_spam_reverting_ops_exhaust_only_own_quota,test_second_agent_quota_unaffected,test_sybil_unregistered_rejected,test_gasPrice_inflation_capped,test_depositDrain_bounded_by_sum_of_quotas,M12InvariantTest::invariant_I14` -> 18 passed, 0 failed; I14 long profile 256x100: 25,600 calls, 0 violations (results/forge_summary_m12_invariant.json); 3 agents x 72 h spam: drain 51,252,966 gwei <= sum-of-quotas 60,000,000 gwei, worst 24 h window 8,544,126 gwei <= cap 10,000,000 gwei, Sybil 0/72 (results/m12_paymaster.json); `pnpm exec vitest run src/paymaster` (packages/shared) 9 passed, tsc ok; whole-tree `forge build` ok. For INT: real-account e2e (setAgentPaymaster, session gas caps must cover pm verif+postOp), api.md section + shared ./paymaster export (DECISIONS [PM]).
+
+## Key facts
+- Novel: D1 one door [E7][E42]; D2 effect meter + signed outcome [E46]; D3 two-track payees [E34][E74][E80].
+- D3: attestation in userOp.signature, validUntil via validationData [E65][E66]; flags on-chain escalate-only; explore 5%/24h, per-tx 1% [A19].
+- Buckets: burst + 24h refill = cap, so any 24h window <= cap; cite 5.0x not 6.8x [E34].
+- Env: forge 1.8.6 at %USERPROFILE%\.foundry\bin (user PATH), halmos/slither ok (results/toolchain.json); extra M0 files tools/lib/common.ts, bootstrap.ts, toolchain.py, test/unit/Mocks.t.sol.
+- D: not mounted: Trace fallback = public fork, then D3-lite [A21]; EntryPoint v0.8, USDC, Permit2 verified on Base RPCs.
+- Order M0-M4, M5||M6, M7||M8, M9; cut check after M4; 20% buffer [A18].
+- No X ran in planning; BUILD targets are design targets [X1][X2].
+
+## Files
+- statement, REQUIREMENTS, ASSUMPTIONS, RESEARCH (+parts), SWAPS, WIN, NOVELTY, HANDOFF, IDEA, EXPERIMENTS, CHANGES, CHANGE_REQUEST, BUILD
+
+## Final
+- One-liner: hypnotize the agent, wallet stays awake. "Limits bound how much; TRACE bounds who."
+- Headline: 0 funds beyond policy (leaked-key script, 1 run/card); <= globalCap/asset/24h, <= explorationCap to unproven payees; X4 H1 only if pre-reg test passes.
+- Open: team size; Base ETH for X3 (A14); bundler v0.8 (A9); facilitator (A10); Trace_CIKM runnable (A21).

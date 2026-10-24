@@ -1,0 +1,37 @@
+# STATE
+Mode: execute     Goal: hackathon
+Problem: W3-02 Agent Wallet — ERC-4337 wallet; agent key spends only within owner policy (contracts/fns, per-tx, daily, recipients, expiry, owner approval); must hold if key leaks or agent injected.
+Event/track: Hypnexis / Track 02 Web3 / W3-02
+Duration/team/compute: 1 week+ / 2-4, strong Solidity / laptop (A6)
+Data: none. Statement: statement.md. Reqs: REQUIREMENTS.md. Assumptions: ASSUMPTIONS.md (A1-A17)
+Constraints: user wants latest research. Context (read-only): TRACE paper https://zenodo.org/records/22706499 (user author); D:\sats_router; D:\trace-api (x402 Base mainnet, buildathon). D:\trace-api\Target_Customers\x402 = Coinbase clone, not user code. BUILD = BACKEND ONLY (contracts, services, agent/attack harness, sim X4; no frontend), multi-milestone. Downloads\AGENTS.md = AgentCredit (other project, not build target). Shell: prefix `rtk` (user CLAUDE.md).
+Judging: not released (A1)
+
+## Phase A: done
+## Phase B: done
+## Phase C: pending (re-run: apply CHANGE_REQUEST.md C18-C31)
+## Phase D: pending (re-run after C)
+
+## Approval: changes: user 2026-10-24 -> apply nikunj/CHANGE_REQUEST.md C18-C31 (D3 TRACE two-track + exploration budget, EIP-712 score attestations, X4 sim sweep, proofs, results table, backend-only build). Re-run C then D, then ask again.
+
+## Key facts
+- Baseline v0 = SimpleAccount + session key + allowlist + daily cap + owner path; score X1. [P1-P13][X1]
+- Research E1-E57 verified (E50-E57 new: Kernel/SmartSessions param rules, Base P-256, MetaMask 7715 + signTypedData, ERC-721/1155).
+- C0: param rules table stakes [E50][E51][E16]; novelty stays D1 one door + D2 effect meter.
+- D1: 1271 owner-only default; x402 voucher mode only if X3 passes; else float EOA fallback. [X3][A10]
+- Policy struct + global bucket + arg rules; NFT move/approve selectors refused without binding arg rule. [E56][E57]
+- Approval: off-chain store, eth_call sim, phone push, MetaMask typedData incl. target/payee/maxOutflow. [E55][A15]
+- Headline: 0 beyond policy, raw-key, 1 run/card; bound <= globalCap/asset/24h all keys; projector run raw counts. [X1]
+- Time: 3p ≈17.1 of ≈16.8 pd, day-3 cut order X3>bounty>MCP. [A17]
+
+## Files
+- statement, REQUIREMENTS, ASSUMPTIONS, RESEARCH (+research_parts/), SWAPS, WIN, NOVELTY, HANDOFF, IDEA, EXPERIMENTS (X1, X2, X3 planned), CHANGES
+
+## Final
+- One-liner: hypnotize agent, wallet stays awake; one door checks policy; caps count measured effect; agent key on projector, judges try to steal.
+- Novel: D1 one door (1271 owner-only + opt-in voucher) ~ Smart Sessions 1271 policy [E7], MetaMask 7715 [E54]; D2 effect meter + signed outcome ~ PACE [E46], hooks Safe/Uniswap [E45][E44]. Param rules = table stakes [E50][E51].
+- Wins: (1) side door live + projector-key bounty; (2) greedy-merchant/approve-MAX/ticket-to-attacker cards beat calldata caps; (3) phone MetaMask approval showing payee+max, honest bounded loss.
+- Paper 5/10.
+- claims: 0 claim problems.
+- sources: 57 entries: PASS 56, WARN 0, CHECK 1 (E34 lookup HTTPError, pre-existing), FAIL 0.
+- Open: Base ETH for X3 (A14); day-1 checks A9 bundler v0.8, A10 facilitator, A15 MetaMask mobile; team size; approve execute mode.

@@ -1,0 +1,25 @@
+{
+  "name": "hypnexis-agent-wallet",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Hypnexis W3-02 agent wallet (backend): an ERC-4337 account whose agent key can only spend inside the owner's policy.",
+  "packageManager": "pnpm@11.1.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "bootstrap": "pnpm install && tsx tools/bootstrap.ts",
+    "test:all": "tsx tools/test_all.ts",
+    "demo": "tsx tools/demo.ts",
+    "toolchain": "python tools/toolchain.py",
+    "typecheck": "tsc -p tsconfig.json && pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@hypnexis/shared": "workspace:*",
+    "@types/node": "^22.20.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.2",
+    "viem": "^2.21.0"
+  }
+}

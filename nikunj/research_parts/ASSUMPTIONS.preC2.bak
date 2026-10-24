@@ -1,0 +1,19 @@
+# Assumptions (not stated in PS)
+
+## A1 Judging rubric unreleased. Assume demo + code quality + security correctness + presentation, typical Web3 track judging (often protocol/security-literate judges).
+## A2 Deployment on a public testnet (e.g. Base Sepolia) is acceptable; mainnet optional. User already runs x402 on Base mainnet (D:\trace-api).
+## A3 "Any open model" means an open-weight LLM agent is allowed; a scripted bot is also allowed. Using an open model is likely valued over a closed API.
+## A4 No dataset. Evaluation = adversarial test suite (attack scenarios, fuzz/invariant tests) built by team.
+## A5 Prior user assets reusable: TRACE trust-scoring API (CIKM 2026 paper, Zenodo record 22706499), x402 middleware, buildathon buyer agent + attack sim (D:\trace-api), SatsRouter agent economy + new_paper/x402_usenix work (D:\sats_router).
+## A6 Compute: laptop-class; no GPU need assumed for this PS.
+## A7 Hackathon goal (not research paper) unless user says otherwise.
+## A8 (Phase D) Effect-metering gas overhead is about 60-90k gas per agent op for 3 tracked tokens and 4 spenders. Inferred from model knowledge, not measured; check on day 1 with `forge test --gas-report`.
+## A9 (Phase D) A public bundler on Base Sepolia supports EntryPoint v0.8. Not verified; check on day 1. Fallback: call `handleOps` directly from an EOA, then an anvil fork.
+## A10 (Phase D) An x402 facilitator will pass a non-65-byte contract signature to the `bytes` overload of USDC `transferWithAuthorization`, and the x402 client can be made to sign with a pre-chosen nonce. Inferred; check on day 1 against the facilitator's verify endpoint.
+## A11 (Phase D) Team split: 3 people as the planning case (Solidity lead, Solidity + tests, agent + UI); 2-person and 4-person variants given in IDEA.md. Range from P16.
+## A12 (Phase D) Demo format unknown (no rubric or limits published, P15). Plan a 3-minute video plus a live run; the $20/day, 3-shop, until-Friday policy is the demo config, not a measurement.
+## A13 (Phase D re-run) The user's TRACE x402 endpoint `POST https://trace-api-nk2026.azurewebsites.net/v1/x402/score` charges $0.005 USDC per call on Base mainnet (eip155:8453), per the user's own README (D:\trace-api\README.md section 6; repo is private, so not an E source). An unpaid HTTP probe on 2026-10-24 (no payment, no transaction) returned HTTP 402 with x402Version 2, scheme `exact`, network eip155:8453, asset USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, amount 5000 base units (USDC has 6 decimals, so $0.005), maxTimeoutSeconds 300, EIP-712 domain name "USD Coin" version "2". The README says it is listed on Coinbase's x402 directory (agentic.market); the directory search API returned no hit for "trace", so the listing is unconfirmed. Which facilitator the endpoint uses is unknown (see A10).
+## A14 (Phase D re-run) X3 needs a small amount of Base mainnet ETH for the account deploy, the voucher-registration UserOp and a possible reclaim, or a paymaster. Amount and source unknown; the user's MetaMask may hold USDC only. Ask the user only if it blocks X3.
+## A15 (Phase D re-run) MetaMask mobile serves `eth_signTypedData_v4` requests opened from a WalletConnect / MetaMask deep link on the approval card. The docs page recommends the method [E55] but does not describe mobile deep links. Check on day 1.
+## A16 (Phase D re-run) Circle's faucet or a test-token mint gives enough Base Sepolia USDC for the projector run (a few hundred test USDC). Fallback: deploy a mock 6-decimal token with EIP-3009 on Base Sepolia and say so on screen.
+## A17 (Phase D re-run) Effort for the re-run items (C2-C17) is a planning estimate in person-days, not measured; same basis as A11.

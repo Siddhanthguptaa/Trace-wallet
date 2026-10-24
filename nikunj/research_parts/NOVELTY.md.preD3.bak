@@ -1,0 +1,108 @@
+# NOVELTY — W3-02 Agent Wallet (prior-art check, 2026-10-24)
+
+Engines used: web search, arXiv API, Europe PMC (returned HTTP 503 "Search service is temporarily unavailable", so no results), GitHub REST search. Semantic Scholar was not used. I fetched every cited page myself. Tags are RESEARCH.md ids after the merge. SmartSession (E7) was a duplicate of [E7], so it was dropped and [E7] is cited instead.
+
+## D1 — "One door": ERC-1271 refuses the session key except a policed x402 / EIP-3009 path
+
+Queries run (verbatim):
+- web: `session key isValidSignature ERC-1271 policy Smart Sessions permit drain`
+- web: `x402 smart account ERC-1271 EIP-3009 transferWithAuthorization ERC-6492 support`
+
+Top hits:
+- Wallet compatibility (x402 docs): https://docs.x402.org/advanced-concepts/wallet-compatibility.md [E42]
+- SmartSession README (Rhinestone + Biconomy): https://raw.githubusercontent.com/erc7579/smartsessions/main/README.md [E7]
+- ERC-7598: Use contract signature for signed transfer: https://eips.ethereum.org/EIPS/eip-7598 [E43]
+- Smart Session Policies - Biconomy Docs: https://docs.biconomy.io/new/smart-sessions/policies (fetched; the policy list covers actions, ERC-20 limits and value limits; no usable 1271 text was found in the static page)
+- Making x402 Programmable with Smart Accounts | Nevermined: https://nevermined.ai/blog/making-x402-programmable (fetched; covers x402 plus smart accounts in general, no session-key 1271 policy)
+
+The threat is real, and the sources confirm it. Permit2 and USDC v2.2 EIP-3009 call the payer account's `isValidSignature` [E42][E43]. The x402 docs define a "permissive" ERC-4337 account as one whose `isValidSignature` accepts a raw ECDSA signature from the controlling key [E42]. A key that passes there can pay through a facilitator without ever submitting a UserOp.
+
+Closest prior work we found is SmartSession [E7]. It lists "ERC-1271 signature validation" as its own session policy type, and it uses ERC-7739 nested typed data. It differs in what the README shows. The module provides a generic per-session 1271 policy hook. The README does not show a policy that:
+- decodes EIP-3009 TransferWithAuthorization fields (to, value, validBefore, nonce);
+- charges them against the same recipient allowlist, per-tx cap and rolling daily budget that UserOp spends use;
+- requires the authorization nonce to be pre-registered in a UserOp first;
+- defaults to refusing the session key on every other 1271 request.
+
+I did not read the SmartSession source, so a policy contract with some of this may exist. Treat this difference as "not shown", not "absent".
+
+## D2 — "Meter the effect": execution-phase balance/allowance delta caps + owner signs the outcome
+
+Queries run (verbatim):
+- web: `smart account spending limit balance delta post-execution hook ERC-7579 checkAfterExecution`
+- web: `"asset delta" OR "balance change" enforcement wallet sign outcome intent simulation guard`
+- arXiv API: `abs:"smart account" AND abs:agent` (sorted by date); `abs:"session key" AND abs:wallet`
+- Europe PMC: `"smart contract wallet" AND agent` (HTTP 503, no results)
+
+Top hits:
+- PACE: Policy-Attested Contract Execution for Safe AI Agents in Decentralized Finance (arXiv 2608.17220, 2026): https://arxiv.org/abs/2608.17220v1 [E46]
+- Smart Wallet Hooks (Uniswap): https://developers.uniswap.org/docs/protocols/smart-wallet/concepts/hooks.md [E44]
+- Safe GuardManager.sol (`checkAfterExecution`): https://raw.githubusercontent.com/safe-global/safe-smart-account/main/contracts/base/GuardManager.sol [E45]
+- The simulation-preview hits (OneKey, Dynamic, Fireblocks, Alchemy) are off-chain previews and are not cited. The search tool's summary notes they show balance changes but do not enforce them on-chain.
+
+Closest prior work we found is PACE [E46]. Its signed Policy Decision Records bind the approved intent, policy and simulation report to the exact execution bytes. A smart account verifies them on-chain at 29,826-31,822 gas, and the paper reports a 0.00 unsafe-execution rate vs 0.80 unguarded in a deterministic sandbox. It differs from D2 in three ways:
+- PACE trusts an off-chain simulation and binds it to the bytes. D2 measures the real token balance and allowance deltas inside execution and reverts if they exceed the cap, whatever the calldata decodes to.
+- The owner signs a maximum outflow per asset bound to the callData hash, not a simulation report.
+- Rolling daily caps are charged from the measured delta.
+
+The execution-hook slot itself is established prior art. Safe guards run post-checks (`checkAfterExecution`) [E45], and Uniswap per-key `afterExecute` hooks list "Spending limits" as a use case [E44]. Neither source shows a delta-metering spend cap that also counts allowance changes.
+
+## Competitors (2025-2026 hackathon / GitHub)
+
+Queries run (verbatim):
+- web: `AI agent wallet ERC-4337 session key policy prompt injection hackathon ETHGlobal 2026`
+- GitHub API: `agent wallet session key policy pushed:>2025-01-01` (3 repos); `erc-4337 agent prompt injection pushed:>2025-01-01` (1 repo)
+
+Findings (allowance.eth skipped as instructed):
+- Phylax SDK - HackQuest [E47] is the closest competitor. It combines ERC-4337, delegated session keys and recipient/contract policy guardrails for AI agents. Its listing does not mention the ERC-1271/x402 path or delta metering.
+- Ramprasad4121/session-policy-wallet [E48] (Monad, 2026) offers session keys with on-chain spend limits and contract allowlists against agent drains.
+- ChainGPT-org/chaingpt-claude-skill [E49] (2026) markets an ERC-4337 agent wallet with per-tx and daily caps that "prompt injection can't drain".
+- Not ERC-4337, so not given entries: keep-starknet-strange/starkclaw (Starknet agent wallet, session keys plus policy guardrails) and trionlabs/maestro (Solana agentic policy engine).
+
+For E47-E49 I only read the descriptions or listing, not the code. Whether any of them guards `isValidSignature` is unknown. The pitch should show the attack live: a leaked key signs an x402 Permit2/EIP-3009 payment with no UserOp. Do not claim that competitors fail it.
+
+## Phase D re-run note (C0, C17)
+Per-parameter rules are not novel: Kernel call policy has per-argument operators [E50] and Smart Sessions UniActionPolicy has ParamRule with IN_RANGE [E51], besides Zodiac Roles [E16]. They are a gap fix in IDEA.md, not a differentiator. MetaMask Advanced Permissions (ERC-7715) [E54] is prior art for the request surface; its page shows token permission types only and nothing about the account's 1271 path. D1 and D2 claims unchanged ("not shown", never "first").
+
+## D3 — "Two tracks": attested payee tiers and an on-chain exploration budget (Phase C re-run 2, CR18-CR20)
+
+What D3 claims. Payees are sorted by a signed TRACE tier [E34]. Proven payees (owner-listed, or attested proven) use the normal caps. Unproven or unattested payees share one account-wide exploration bucket per asset, charged with D2's measured outflow. Flagged payees go to owner approval. The attestation is EIP-712 typed data bound to the chain and the wallet, carried in `userOp.signature` and checked in validation, with validUntil folded into validationData [{EIP712}][{VPM}][E2]. Claim to test: loss to unproven payees <= explorationCap per window, even with an injected agent [X1][X5].
+
+Light check per the hackathon goal (at most 2 queries per sub-question plus one competitor search), run by one agent on 2026-10-24. Engines: arXiv API, web search, GitHub REST search. Semantic Scholar was not used. Raw log: research_parts/nov2_log.md.
+
+### (a) On-chain spend policy with a separate budget for unknown payees, keyed to trust
+Queries run (verbatim):
+- arXiv API, newest first: `(abs:x402 OR abs:"ERC-8004" OR abs:"agent wallet" OR abs:"smart account" OR abs:"session key") AND (abs:reputation OR abs:trust) AND (abs:spending OR abs:budget OR abs:limit OR abs:policy)`
+- web: `agent smart account spending limit policy new recipients reputation attestation gated payments ERC-8004 x402 session key 2026`
+
+Top hits: MetaMask "Recurring x402 payments" [{N1}]; Openfort "Agent wallet identity, permissions, and compliance" [{N2}]; "SoK: Blockchain Agent-to-Agent Payments" [{N3}]; an ERC-8004 readiness paper (arXiv 2606.12128, abstract fetched: reputation formation "remain limited", feedback "highly concentrated"; not an entry); Nevermined "Making x402 Programmable with Smart Accounts" (fetched: per-merchant caps, no trust input shown; not an entry).
+
+Closest prior work we found is MetaMask's periodic x402 permission [{N1}], a contract-metered weekly cap on an agent's x402 spend, together with static allowlist rules such as Openfort's [{N2}]. It differs from D3 in that both apply one policy whoever the payee is, and payee trust is not an input (not shown). An unknown payee is either inside the shared cap or blocked. D3 picks the budget per recipient from an attestor-signed tier checked in validation, and gives unproven payees a separate, smaller per-window budget. The SoK names "misuse under valid authorization" as a key challenge and "behavior-aware control" as a future direction, without a mechanism (abstract only) [{N3}].
+
+### (b) Budgeted exploration for newcomers
+Queries run (verbatim):
+- arXiv API, newest first: `ti:conservative AND (ti:bandit OR ti:bandits OR ti:exploration)`
+- arXiv API, newest first: `(abs:newcomer OR abs:newcomers OR abs:"cold-start" OR abs:"cold start") AND (abs:reputation OR abs:trust) AND (abs:exploration OR abs:bandit OR abs:bandits)`
+- plus a direct fetch of arXiv 1602.04282.
+
+Closest prior work we found is conservative bandits [{N4}] and a 2026 descendant that keeps a reserve ledger [{N5}], plus MonoScale's onboarding track for new agents in an LLM router [{N6}]. They differ from D3 in that they bound the reward shortfall of a learner that follows the algorithm, and the budget is statistical. D3 assumes the chooser may be hostile (an injected agent) and enforces the budget as a hard per-window outflow cap in the account. Its newcomer signal is an external attestor's tier, not the learner's own confidence bounds. D3 claims a loss bound, not a regret bound. TRACE itself lists visibility-conditioned exploration (gating Thompson sampling on the top-two utility gap) as future work [E34]; X4 tests the budgeted track instead [X4].
+
+### (c) Plain-world analog: bank new-payee limits
+Queries run (verbatim):
+- web: `bank "new payee" lower limit "first 24 hours" fraud protection`
+- web: `"newly added beneficiary" cooling period maximum amount first 24 hours bank`
+
+Closest analog we found is Bank of Ireland UK [{N7}]. New payees can receive at most €1,000 / £1,000 per day for up to 48 hours, against €20,000 / £20,000 per day for existing payees, i.e. 5%, the same ratio as D3's default [A19]. It differs from D3 in two ways. The bank's new-payee status ends by time, while D3's ends by evidence (an attested tier), so an old but unproven payee stays in the exploration track. The bank enforces the limit in its own systems, while D3 enforces it in the account contract even when an attacker drives the agent key. Standard Chartered Singapore uses a 12-hour hold for new payees instead (fetched, not an entry); D3 uses a budget, not a hold.
+
+### Attestation mechanism (not claimed as novel)
+Verifying an off-chain signer's data inside ERC-4337 validation, with validUntil/validAfter packed into validationData, is the reference VerifyingPaymaster pattern [{VPM}]. EIP-712's domain binds chainId and verifyingContract [{EIP712}]. D3 reuses the pattern inside the account for payee tiers. Table stakes, not novelty.
+
+### Competitors
+Query run (verbatim): `gh api -X GET search/repositories -f q='x402 reputation spending in:name,description,readme'` (total_count 1709, best match first). Most hits are curated lists or general agent-wallet toolkits.
+
+Closest competitor we found is keep-starknet-strange/starknet-agentic [{N8}]: Starknet (Cairo) agent accounts with session keys and spending-policy enforcement, next to ERC-8004 identity, reputation and validation registries. Its README does not show a policy that reads reputation, a separate budget for unproven payees, or a signed score checked during validation. We read the README only, so this is "not shown", not "absent". It is not ERC-4337. The first-pass competitors (Phylax SDK [E47], session-policy-wallet [E48], chaingpt-claude-skill [E49]) describe static recipient and contract guardrails.
+
+### Fresh incident that supports D2 and D3
+x402 client SDKs before 2.23.0 reportedly signed whatever amount a 402 response asked for; the fix is an off-chain, client-side $1 per-payment cap with `spendControls: false` as an off switch [{X402CL}][{X402DEV}]. A per-payment cap in the agent's own process does not bound totals and is bypassed by whoever holds the key (inference). That is the gap D2's measured, per-window caps and D3's per-payee window budget close on-chain.
+
+### Decision and wording
+D3 is kept as the third, smaller differentiator. Wording for IDEA.md: "Closest prior work we found is MetaMask's periodic x402 permission (one window cap for all payees) [{N1}] and static allowlists [{N2}]; banks cap new payees at 5% of the normal daily limit for 48 hours [{N7}]. D3 differs in keying the budget to an attested trust tier, checking it in ERC-4337 validation, and enforcing the newcomer budget on-chain against a hostile agent." The two-track split itself is established in banking and in bandits [{N4}]; the combination and its enforcement point are what we show. Never "first".
