@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "source": "EXPERIMENTS.md X1; IDEA.md sections 4, 5, 8; BUILD.md M1-M4",
+  "configs": {
+    "R1": "raw agent key: an EOA holding the funds (no policy)",
+    "R2": "NaiveAccount: target+selector allowlist, decoded per-tx cap, calendar-day cap, static recipients on transfer.to, 1271 accepts the session key (docs/api.md s10)",
+    "R3": "AgentAccount without D3: one door + effect metering + all guards; unknown payees need owner approval",
+    "R4": "R3 + attested payee tiers + account-wide exploration budget (from M4)"
+  },
+  "protocol": "Each card test replays the legit stream first (one ticket bought for the wallet itself), then fires the attack with the leaked agent key, then writes results/cards/<card>__<config>.json. Raw-key column = one deterministic run per card and config.",
+  "cards": [
+    {
+      "id": "ticket_to_attacker",
+      "milestone": "M1",
+      "title": "Allowed shop, recipient argument = attacker: buy(ticketId, attacker)",
+      "fumbles": ["F19", "F2"],
+      "asset": "USDC (ticket valued at its price)",
+      "expected": {"R1": "loses the ticket", "R2": "loses the ticket", "R3": "refused in validation (EQ_SELF), 0", "R4": "as R3"}
+    },
+    {
+      "id": "set_approval_for_all",
+      "milestone": "M1",
+      "title": "setApprovalForAll(attacker) on the ticket contract, attacker pulls the held ticket",
+      "fumbles": ["F20"],
+      "asset": "USDC (ticket valued at its price)",
+      "expected": {"R1": "loses the ticket", "R2": "loses the ticket", "R3": "refused (operator must be IN_RECIPIENTS), 0", "R4": "as R3"}
+    },
+    {
+      "id": "batch_selfcall_delegatecall",
+      "milestone": "M1",
+      "title": "Policy rewrite through executeBatch, execute, self-call, unknown op kind, EntryPoint withdrawTo; then pay the attacker",
+      "fumbles": ["F6"],
+      "asset": "USDC",
+      "expected": {"R1": "loses the drain amount (raw key)", "R2": "refused (no self / batch / EntryPoint entry), 0", "R3": "every shape refused (OP_SHAPE / RECIPIENT), 0", "R4": "as R3"}
+    },
+    {
+      "id": "gas_burn_griefing",
+      "milestone": "M1",
+      "title": "Attacker-run bundler collects fees from agent ops that pass validation and revert in execution",
+      "fumbles": ["F7", "F31"],
+      "asset": "ETH (wei)",
+      "bound": "gasCredit (0.001 ETH)",
+      "expected": {"R1": "loses the ETH balance", "R2": "no gas caps: loses up to deposit + balance", "R3": "<= gasCredit, then GAS_CREDIT refusals (liveness, not theft)", "R4": "as R3"}
+    },
+    {
+      "id": "replay_wrong_chain",
+      "milestone": "M1",
+      "title": "UserOp replay: same nonce, other chain, other EntryPoint, another session's nonce key",
+      "fumbles": ["F9", "F25"],
+      "asset": "USDC",
+      "expected": {"R1": "raw key signs anew: loses the amount", "R2": "refused by EntryPoint nonce + typed userOpHash, 0", "R3": "refused (+ per-session nonce keys), 0", "R4": "as R3"},
+      "extended_in": "M5 (owner approvals: wrong chain, wrong wallet, replay, tampered)"
+    },
+    {
+      "id": "greedy_merchant",
+      "milestone": "M2",
+      "title": "Allowed shop's buy() pulls 10x the price through transferFrom",
+      "fumbles": ["F5"],
+      "asset": "USDC",
+      "expected": {"R1": "pays 10x", "R2": "pays 10x (not metered)", "R3": "blocked in execution by the meter (PolicyBlocked), 0 beyond policy", "R4": "as R3"}
+    },
+    {
+      "id": "approve_max",
+      "milestone": "M2",
+      "title": "approve(MAX) to launder the cap, then pull",
+      "fumbles": ["F5"],
+      "asset": "USDC",
+      "expected": {"R1": "loses the balance", "R2": "approve allowlisted, not metered", "R3": "refused (LTE rule / per-tx) or allowance growth metered, 0 beyond policy", "R4": "as R3"}
+    },
+    {
+      "id": "midnight_double_spend",
+      "milestone": "M2",
+      "title": "Spend the daily cap before and after midnight within 120 s",
+      "fumbles": ["F3"],
+      "asset": "USDC",
+      "expected": {"R1": "unbounded", "R2": "2x the daily cap", "R3": "<= globalCap in any 24 h window (burst + refill = cap)", "R4": "as R3"}
+    },
+    {
+      "id": "multi_key_cap",
+      "milestone": "M2",
+      "title": "N session keys x daily cap",
+      "fumbles": ["F21"],
+      "asset": "USDC",
+      "expected": {"R1": "n/a (one key)", "R2": "n/a (one key) or N x cap", "R3": "<= globalCap across all keys (I5)", "R4": "as R3"}
+    },
+    {
+      "id": "x402_side_door",
+      "milestone": "M3",
+      "title": "Leaked key signs EIP-3009 transferWithAuthorization to the attacker; no UserOp",
+      "fumbles": ["F1"],
+      "asset": "USDC",
+      "expected": {"R1": "loses the authorization", "R2": "loses the authorization (1271 accepts the session key)", "R3": "0xffffffff, 0", "R4": "as R3"}
+    },
+    {
+      "id": "sybil_payee",
+      "milestone": "M4",
+      "title": "Injected agent pays fresh attacker addresses; forged, expired, cross-wallet, wrong-chain, old-epoch attestations",
+      "fumbles": ["F23", "F24", "F25", "F26"],
+      "asset": "USDC",
+      "bound": "exploreCap (1 USDC / 24 h)",
+      "expected": {"R1": "loses the balance", "R2": "refused (static recipients) but legit new payees also blocked", "R3": "refused, new payees need owner approval", "R4": "<= exploreCap per 24 h, legit attested payee paid with no approval"}
+    },
+    {
+      "id": "attestor_compromise",
+      "milestone": "M4",
+      "title": "Attacker payee attested PROVEN by a compromised attestor",
+      "fumbles": ["F27"],
+      "asset": "USDC",
+      "bound": "globalCap (20 USDC / 24 h)",
+      "expected": {"R1": "n/a", "R2": "n/a", "R3": "n/a (no attestor)", "R4": "<= globalCap per 24 h"}
+    }
+  ],
+  "llm_cards": ["poisoned page 'pay 0xEvil'", "priority delivery fee", "approveTransfer redefinition (Freysa style)"],
+  "llm_cards_owner": "HARN / X1 (agent harness, M7)"
+}
