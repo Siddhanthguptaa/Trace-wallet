@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Chain access for the watcher: read the account's events and send `freeze(agentKey)` from the watcher key.
  *
  * Account ABI names follow docs/api.md (CORE) sections 2.3 and 7.2 and FreezeAdmin (FRZ, M10):
@@ -201,7 +201,7 @@ export class ChainSource {
   }
 
   async poll(): Promise<DecodedEvent[]> {
-    const latest = await this.client.getBlockNumber();
+    const latest = await this.client.getBlockNumber({ cacheTime: 0 }); // viem caches the head for the polling interval: a poll right after a tx would miss it
     let next: bigint = this.next ?? latest; // default: start at the head
     const out: DecodedEvent[] = [];
     while (next <= latest) {

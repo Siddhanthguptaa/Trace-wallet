@@ -65,13 +65,13 @@ watcher,detection_of_runs_reaching_wallet,H7,0,0,,,
 watcher,containment_within_bound,H7,20,20,1.0,0.8389,1.0
 watcher,detection_of_runs_reaching_wallet,H8,20,20,1.0,0.8389,1.0
 watcher,containment_within_bound,H8,20,20,1.0,0.8389,1.0
-watcher,detection_of_runs_reaching_wallet,H9,18,20,0.9,0.699,0.9721
+watcher,detection_of_runs_reaching_wallet,H9,20,20,1.0,0.8389,1.0
 watcher,containment_within_bound,H9,20,20,1.0,0.8389,1.0
 watcher,false_freeze,L1,0,20,0.0,0.0,0.1611
 watcher,false_freeze,L2,0,20,0.0,0.0,0.1611
 watcher,false_freeze,L3,0,20,0.0,0.0,0.1611
 watcher,false_freeze,L4,0,20,0.0,0.0,0.1611
-watcher,overall_detection,ALL,113,120,0.9417,0.8845,0.9715
+watcher,overall_detection,ALL,115,120,0.9583,0.9062,0.9821
 watcher,overall_containment,ALL,180,180,1.0,0.9791,1.0
 watcher,overall_falseFreeze,ALL,0,80,0.0,0.0,0.0458
 none,detection_of_runs_reaching_wallet,H1,0,20,0.0,0.0,0.1611

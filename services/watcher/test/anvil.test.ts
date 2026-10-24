@@ -179,9 +179,15 @@ describe('anvil: watcher role against the real AgentAccount', { skip: !anvil || 
     assert.equal(r.status, 'sent');
     assert.equal(await isFrozen(AGENT), true);
     assert.equal((await freezer.ensureFrozen(account, AGENT, 'again')).status, 'already');
-    const evs = (await source.poll()).map((d) => d.event);
+    // A real poller keeps polling: accumulate (polls are incremental) until the event shows up. A single
+    // immediate poll was flaky under machine load (anvil log visibility vs the receipt).
+    const evs: Awaited<ReturnType<typeof source.poll>>[number]['event'][] = [];
+    for (let i = 0; i < 25 && !evs.some((e) => e.kind === 'frozen'); i++) {
+      if (i) await new Promise((r) => setTimeout(r, 200));
+      evs.push(...(await source.poll()).map((d) => d.event));
+    }
     const fr = evs.find((e) => e.kind === 'frozen');
-    assert.ok(fr && fr.kind === 'frozen' && fr.agentKey === AGENT && fr.by === watcherAddr);
+    assert.ok(fr && fr.kind === 'frozen' && fr.agentKey === AGENT && fr.by === watcherAddr, `events seen: ${JSON.stringify(evs)}; head ${await pub().getBlockNumber({ cacheTime: 0 })}`);
   });
 
   it('escalate-only on-chain: stranger cannot freeze, watcher cannot unfreeze; the owner can', async () => {

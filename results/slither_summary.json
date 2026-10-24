@@ -1,0 +1,79 @@
+{
+  "tool": "slither 0.11.6",
+  "scope": "contracts/src (filter-paths: lib|test|script|mocks|baselines)",
+  "detectors": 102,
+  "contractsAnalyzed": 81,
+  "resultsTotal": 77,
+  "byCheck": {
+    "arbitrary-send-eth": {
+      "count": 1,
+      "impact": "High",
+      "confidence": "Medium"
+    },
+    "assembly": {
+      "count": 18,
+      "impact": "Informational",
+      "confidence": "High"
+    },
+    "calls-loop": {
+      "count": 12,
+      "impact": "Low",
+      "confidence": "Medium"
+    },
+    "cyclomatic-complexity": {
+      "count": 1,
+      "impact": "Informational",
+      "confidence": "High"
+    },
+    "dead-code": {
+      "count": 3,
+      "impact": "Informational",
+      "confidence": "Medium"
+    },
+    "incorrect-equality": {
+      "count": 3,
+      "impact": "Medium",
+      "confidence": "High"
+    },
+    "low-level-calls": {
+      "count": 2,
+      "impact": "Informational",
+      "confidence": "High"
+    },
+    "missing-zero-check": {
+      "count": 1,
+      "impact": "Low",
+      "confidence": "Medium"
+    },
+    "naming-convention": {
+      "count": 1,
+      "impact": "Informational",
+      "confidence": "High"
+    },
+    "reentrancy-events": {
+      "count": 3,
+      "impact": "Low",
+      "confidence": "Medium"
+    },
+    "timestamp": {
+      "count": 10,
+      "impact": "Low",
+      "confidence": "Medium"
+    },
+    "uninitialized-local": {
+      "count": 11,
+      "impact": "Medium",
+      "confidence": "Medium"
+    },
+    "unused-return": {
+      "count": 7,
+      "impact": "Medium",
+      "confidence": "Medium"
+    },
+    "unused-state": {
+      "count": 4,
+      "impact": "Informational",
+      "confidence": "High"
+    }
+  }
+}

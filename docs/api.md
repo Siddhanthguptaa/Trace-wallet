@@ -960,3 +960,224 @@ The service never holds the owner key. It holds no agent key either: requests ar
   with the same schema and `realAccount: true`, the BUILD M5 Done-when file.
 
 Changelog: 2026-10-24 APPS (M5): first version of section 16.
+
+
+---
+
+## 17. FreezeModule and the watcher (FRZ, M10): implemented contract
+
+Code: `contracts/src/modules/FreezeModule.sol` (`FreezeStorage`, `FreezeModule` core hooks, `FreezeAdmin` compiled
+into `AgentAccountAdmin`, and the external library `FreezeTripwires`), service `services/watcher`
+(`@hypnexis/watcher`). Copy of record for the service: `services/watcher/API.md`. Section 9's FRZ paragraph is the
+design; this section is what was built.
+
+### 17.1 On-chain tripwires
+
+Every window is a clock-hour pair: the current hour (`timestamp / 3600`) plus the previous one. Every rolling 1 h
+window that ends now lies inside the pair, so no rolling-1 h breach escapes; the pair can over-count by up to a 2 h span.
+
+| Id | Where | Trips when | Default |
+|---|---|---|---|
+| T4 canary | inner frame, before the call | the op's target, its payee (if any) or its selector is an owner-set canary | none set |
+| T2 new-payee spray | inner frame, before the call | distinct unproven payees (`Track.EXPLORE`) in the pair > `sprayMax`; a payee counts once per clock hour | 5 (the 6th trips) |
+| T1 velocity | inner frame, after metering | one asset's measured outflow in the pair > `velocityBps` x (`burst + ratePerDay` of its global cap) / 10,000 | 4000 bps (8 USDC under the demo cap). X6 pins 6000 on dev seeds |
+| T3 strike streak | outer frame | blocked ops (any policy breach or tripwire) in the pair, since the last unfreeze, >= `strikeMax` | 3 (the 3rd freezes) |
+
+A tripped T1, T2 or T4 reverts the inner frame with `TripwireTripped(stage)` (0 = before the call, 1 = after
+metering): the spend is undone. The outer frame then freezes the key and emits `AgentFrozen(key, account, userOpHash)`
+and `PolicyBlocked`. T1 and T2 ignore `Track.APPROVAL` ops (the owner signed their outflow); T1 ignores assets with no
+global cap; `velocityBps >= 10000` never trips. A frozen key gets reason `FROZEN` (19) in `validateUserOp`,
+`checkUserOp`, `policyCheck` and the execution re-check (invariant I13).
+
+### 17.2 Admin surface (called on the account address)
+
+| Function | Who | Notes |
+|---|---|---|
+| `freeze(address agentKey)` | owner or watcher | escalate-only; emits `AgentFrozen(key, msg.sender, 0)` |
+| `unfreeze(address agentKey)` | owner (or an owner op) | clears the freeze and the strikes; emits `AgentUnfrozen` |
+| `setWatcher(address w)` | owner | refuses a live agent key; `setPolicy` refuses the watcher as a key; emits `WatcherSet` |
+| `setFreezeParam(bytes32 key, uint256 value)` | owner | canaries and T1-T3 thresholds; emits `FreezeParamSet(key, value)` |
+| `freezeParam(bytes32) view`, `isFrozen(key)`, `strikes(key)`, `watcher()` | anyone | `strikes` = blocked ops since the last unfreeze |
+
+`setFreezeParam` keys: `bytes32(uint256(uint160(addr)))` canary target or payee; `bytes32(bytes4 selector)` canary
+selector (key 0 = selector `0x00000000`, any plain value send); `keccak256("hypnexis.freeze.velocityBps")`,
+`...sprayMax`, `...strikeMax` (0 = default). A canary fires only on ops that pass validation, so plant canaries the
+policy can reach (a PAYEE-rule decoy recipient, or an allowed selector legit flows never use).
+
+### 17.3 Watcher service (default port 8790)
+
+Detectors (`services/watcher/src/detectors.ts`): `spend_cusum` (Page CUSUM on `Decision` outflows per bin, k = 4x the
+cap's sustainable rate, h = fraction of the daily cap), `revert_streak` (consecutive failures >= 4), `revert_cusum`
+(TRACE's default-risk Bernoulli CUSUM, ported verbatim), `approval_rate` (more than 6 requests per 3600 s). Each alarms
+once per key until `AgentUnfrozen`. The freeze path sends `freeze(agentKey)` through the watcher role only if
+`watcher()` equals the service key and the key is not already frozen; there is no unfreeze code path anywhere.
+
+| Endpoint | Request | Response |
+|---|---|---|
+| `GET /health` | | `{ ok, service: "watcher", watcher, chainId }` |
+| `GET /v1/state` | | per account / key detector state + alarms |
+| `POST /v1/approval-requests` | `{ account, agentKey, ts? }` | `{ accepted: true, alarms: [...] }` |
+
+Env: `WATCHER_PRIVATE_KEY`, `RPC_URL`, `CHAIN_ID`, `WATCHER_ACCOUNTS`, `ENTRYPOINT`, `WATCHER_PORT`, `POLL_MS`,
+`FROM_BLOCK`, `WATCHER_CONFIG`, `WATCHER_CAPS`. Thresholds used for the X6 scored run are pinned in
+`agent/hijack/thresholds.json` (fixed on dev seeds 1-3 by `tools/x6_sweep.ts`).
+
+Results: `results/m10_freeze_e2e.json` (`scripts/e2e/freeze.ts`, real account + in-process watcher service).
+
+## 18. RecoveryModule (REC, M11): implemented contract
+
+Code: `contracts/src/modules/RecoveryModule.sol`, compiled into `AgentAccountAdmin` (admin side). Exactly 5 guardians,
+threshold 3, delay 48 h, owner veto.
+
+```
+setGuardians(address[] guardians_, uint8 threshold_)   owner; exactly 5 distinct, threshold 3; not 0 / owner /
+                                                       account / any session key; cancels a live proposal
+proposeRecovery(address newOwner)                       guardian; the proposal counts as its approval
+approveRecovery(uint64 proposalId)                      guardian; msg.sender approval, once per proposal
+executeRecovery()                                       anyone; >= 3 distinct approvals AND >= 48 h since the proposal
+vetoRecovery()                                          owner, any time before execution
+guardians() view -> (address[], uint8)
+pendingRecovery() view -> (uint64 proposalId, address newOwner, uint48 proposedAt, uint256 approvals, bool vetoed)
+```
+
+Events: `GuardiansSet(address[] guardians, uint8 threshold)`, `RecoveryProposed(uint64 indexed proposalId,
+address indexed newOwner, address indexed by)`, `RecoveryApproved(uint64 indexed proposalId, address indexed guardian)`,
+`RecoveryVetoed(uint64 indexed proposalId)`, `RecoveryCancelled(uint64 indexed proposalId)`, plus the core
+`OwnerChanged`. Errors: `RecoveryNotEnabled`, `BadGuardians`, `NotGuardian`, `NoRecovery`,
+`RecoveryPending(uint64 proposalId)`, `AlreadyApproved`, `RecoveryNotReady`, `GuardianBarred`, `BadAddress(address)`.
+
+Semantics:
+- Approvals are `msg.sender` transactions, not signatures: bound to the chain (EIP-155 tx), the account (tx target)
+  and the proposal id; ids are never reused and the approval bitmap is per proposal, so nothing is replayable.
+- The 48 h delay runs from the proposal, not from the last approval. `executeRecovery` uses the constant threshold 3.
+- Execution calls only the core hook `_applyRecovery(newOwner)`: new owner, every agent session revoked, `attestEpoch`
+  bumped. No external call, no funds move (tested, I11 and I12).
+- `newOwner` may not be 0, the account, the current owner, a guardian or a session key; a guardian that is or ever was a
+  session key cannot propose or approve.
+- Liveness: a proposal under threshold 48 h after it was made is stale; another guardian may replace it and the stale
+  proposer is barred until `setGuardians` or an executed recovery. A proposal at threshold is never replaceable.
+- Trust assumptions (THREAT_MODEL): three colluding guardians take over after 48 h if the owner never vetoes; an owner key
+  thief can veto or reset guardians forever (the veto is the specification); registered x402 vouchers are not cancelled by
+  recovery (bounded by the caps and the 600 s voucher TTL).
+
+Results: `results/m11_recovery_e2e.json` (`scripts/e2e/recovery.ts`, 26 checks), invariant I12
+(`results/m11_i12.json`).
+
+## 19. AgentPaymaster (PM, M12): implemented contract
+
+Code: `contracts/src/paymaster/AgentPaymaster.sol` (staked EntryPoint v0.8 paymaster, `BasePaymaster`). Shared helper:
+`@hypnexis/shared/paymaster` (`packages/shared/src/paymaster/index.ts`: `buildPaymasterAndData`, `requiredPrefund`,
+`gasCapViolations`, `quotaValidAfter`, `agentPaymasterAbi`).
+
+```
+constructor(IEntryPoint, address owner, GasCaps caps)
+registerAgent(address account, uint128 burst, uint128 ratePerDay)   owner; re-quota keeps what is spent
+deregisterAgent(address account)                                     owner; the bucket is kept (no early refill)
+setGasCaps(GasCaps caps)                                             owner
+gasCaps() / agentOf(account) -> (registered, quota, pending) / available(account) / previewValidAfter(account, maxCost)
+maxSponsoredOver(window) / isStaked()
+addStake(uint32 unstakeDelaySec) payable (owner) / deposit() payable
+GasCaps { uint64 maxFeePerGas; uint32 callGasLimit; verificationGasLimit; preVerificationGas;
+          paymasterVerificationGasLimit; paymasterPostOpGasLimit }
+```
+
+Events: `AgentRegistered(account, burst, ratePerDay)`, `AgentDeregistered(account)`, `GasCapsSet(caps)`,
+`GasSponsored(account, userOpHash, reserved, charged, opSucceeded)`. Errors: `ZeroAddress`, `NotRegistered(account)`,
+`GasFieldAboveCap(uint8 field, uint256 value, uint256 cap)` (fields 0 maxFee, 1 call, 2 verification, 3 preVerification,
+4 pm verification, 5 pm postOp), `PostOpGasTooLow(value, min)` (`MIN_POSTOP_GAS = 30000`), `QuotaExceeded(account,
+needed, burst)`.
+
+Rules (the spam bound, I14):
+- Quota per agent account in wei: a `lib/Buckets` bucket, so sponsored gas in any window of t seconds <=
+  `burst + ratePerDay x t / 86400`; the deposit drain over t <= `maxSponsoredOver(t)` (sum of quotas).
+- Validation touches only storage keyed by the sender, and needs no TIMESTAMP: if `pending + maxCost` exceeds the stored
+  level it returns `validAfter` = the first second the bucket has refilled enough (the EntryPoint answers "AA32
+  paymaster expired or not due" until then). `postOp` debits only `charged = min(maxCost, actualGasCost +
+  (postOpGasLimit + 15000) x fee)` at the real block time, so the unused part is refunded; an op that reverts in
+  execution is still charged to its own agent.
+- On the account side (section 3.5): agent ops may name only the owner-set `agentPaymaster` (`setAgentPaymaster(address)`,
+  `agentPaymaster()` on the admin), otherwise reason `PAYMASTER` (20); paymaster gas limits count in the op's max cost
+  and are debited from the session `gasCredit`; the session caps must cover pm verification 80k + postOp 50k.
+- `paymasterAndData` = paymaster (20) | verificationGasLimit (uint128) | postOpGasLimit (uint128) | data.
+
+Results: `results/m12_paymaster_e2e.json` (`scripts/e2e/paymaster.ts`, real account, 14 checks), `results/m12_paymaster.json`
+(3 agents x 72 h spam), I14 in `results/forge_summary_m12_invariant.json`.
+
+## 20. PolicyLens
+
+Code: `contracts/src/lens/PolicyLens.sol`. Stateless and view-only; deploy once per chain and call with `eth_call`. It may
+read `block.timestamp` (validation may not), so it adds what `policyCheck` cannot see: expiry, bucket levels and the gas
+credit. It is never part of the trust path: the account re-checks everything itself. The agent tools call it before
+submitting, so an honest agent never submits an op that execution would then block (every block is a strike toward T3).
+
+```
+checkPolicy(address account, address agentKey, bytes callData, bytes attestation) -> (bool ok, Track track, uint16 reasonCode)
+checkPolicyEx(Query { account, agentKey, callData, attestation, approval, maxGasCost, outflows[] }) ->
+    Result { ok, reasonCode, tier, track, validUntil, maxGasCost, outflows[] }
+outcomeApprovalDigest(OutcomeApproval) pure -> bytes32          the EIP-712 digest (== TypedData.sol)
+encodeApproval(OutcomeApproval, bytes ownerSig) pure -> bytes   the approval slot for userOp.signature
+```
+
+Order, first failure wins: `account.policyCheck` (NO_SESSION, REVOKED, then module codes; a revert gives OP_SHAPE, or
+APPROVAL when a slot was given) -> EXPIRED (session window, then the attestation / approval `validUntil`) -> per-asset
+outflows (given, else decoded from the calldata): ASSET, PER_TX, EXPLORE_PER_TX, KEY_BUCKET, GLOBAL_BUCKET, EXPLORE_BUCKET;
+APPROVAL track: summed outflow <= `maxOutflow` -> GAS_CREDIT (`maxGasCost`; 0 = worst case at the session's caps, which
+may refuse early). `reasonCode = code | (detail << 8)` (section 7.1).
+
+## 21. External libraries and deployment (linking)
+
+`AgentAccount` links four external libraries that run by DELEGATECALL on the account's storage (EIP-170: the core is
+19,081 B of runtime, `AgentAccountAdmin` 22,685 B; the libraries carry the module logic):
+
+| Library | Source file | Runtime | Placeholders in `AgentAccount` | Module |
+|---|---|---|---|---|
+| `MeterLib` | `modules/MeterModule.sol` | 5,863 B | 4 | D2 effect meter |
+| `OneDoorLib` | `modules/OneDoorModule.sol` | 5,403 B | 4 | D1 one door, vouchers, reclaim |
+| `FreezeTripwires` | `modules/FreezeModule.sol` | 2,276 B | 3 | T1/T2/T4 + strike policy |
+| `ApprovalLib` | `modules/ApprovalModule.sol` | 4,053 B | 3 | OutcomeApproval validation and settle |
+
+`AgentAccountAdmin`, `AgentAccountFactory`, `PolicyLens` and `AgentPaymaster` link nothing. Deploy order: libraries,
+EntryPoint (unless existing), `AgentAccountAdmin(entryPoint)`, `AgentAccount(entryPoint, admin)` (libraries linked),
+`AgentAccountFactory(implementation)`, `PolicyLens`, optionally `AgentPaymaster(entryPoint, owner, caps)`. The factory
+reverts `ImplementationMismatch` unless the implementation's admin and EntryPoint have code.
+
+- Foundry: `forge test` and `forge script contracts/script/Deploy.s.sol --broadcast` link automatically.
+- viem: `scripts/lib/stack.ts` reads each artifact's `bytecode.linkReferences`, deploys every referenced library once and
+  replaces the `__$<34 hex>$__` placeholders (a placeholder left over is a hard error). `pnpm exec tsx scripts/deploy.ts`
+  uses it (`--anvil` for a self-contained run); the real-account e2es, the demo beats and X3 use the same module.
+- The services' TypeScript harnesses (`agent/src/world/deploy.ts`, the watcher anvil test) link the same way.
+
+## 22. x402 vouchers: the 600 s validity rule
+
+A voucher (section 4.6) is a deferred `token.transfer(to, value)` debited from the buckets at registration but settleable
+until `validBefore`. To keep the sliding-24 h bound on settlement-time outflow, registration (execution phase) requires
+`now < validBefore <= now + 600` (`OneDoorLib.VOUCHER_MAX_TTL`), otherwise the op is blocked with `EXPIRED`.
+Consequences for clients:
+- Real x402 sellers advertise `maxTimeoutSeconds` of 60-300 s; register the voucher and pay within that window. The mock
+  seller in `agent/src/mock/x402Seller.ts` offers `validBefore = now + 300`. A seller that insists on a longer window cannot
+  be paid through a voucher.
+- The 600 s check is an execution-phase check: the tools' pre-check (`PolicyLens`) cannot see it, so a client that picks a
+  longer validity burns a strike (T3). The legit stream of X1/X6 hit exactly this before the mock seller was fixed.
+- After `validBefore`, anyone may `reclaim(nonce)`: a voucher the token reports used (or cancelled) is marked `Used` with no
+  credit; an unused one is `Reclaimed` and its value credited back to the buckets once.
+
+Results: `results/m3_onedoor_e2e.json` (`scripts/e2e/onedoor.ts`, 19 checks).
+
+## 23. Scripts and result files added by INT
+
+| Script | Result file | What it proves on the real AgentAccount |
+|---|---|---|
+| `scripts/e2e/core.ts` | `results/m1_core_e2e.json` | owner path, policy clauses with the account's own reason per refusal, signature / nonce / chain id / replay / expiry / revoke |
+| `scripts/e2e/meter.ts` | `results/m2_meter_e2e.json` | greedy merchant, approve-then-pull counted once, midnight and multi-key bounds (tripwires off) |
+| `scripts/e2e/onedoor.ts` | `results/m3_onedoor_e2e.json` | EIP-3009 / 2612 side door refused, voucher register / settle / tamper / TTL / reclaim |
+| `services/attestor/scripts/e2e.ts` with `E2E_TARGET_MODULE=services/attestor/scripts/lib/realTarget.ts` | `results/m6_attestor_e2e.json` | attestations accepted by the wallet, Sybil ring flagged on-chain |
+| `services/approval/scripts/e2e.ts` with `.../realTarget.ts`; `scripts/account-checks.ts` | `results/m5_approval_e2e.json`, `results/m5_approval_account_checks.json` | owner approvals through the service; 13 hand-built adversarial approvals at the account |
+| `scripts/e2e/freeze.ts` | `results/m10_freeze_e2e.json` | tripwire, watcher freeze, escalate-only, owner unfreeze |
+| `scripts/e2e/recovery.ts` | `results/m11_recovery_e2e.json` | 3-of-5, 48 h, owner veto, no replay |
+| `scripts/e2e/paymaster.ts` | `results/m12_paymaster_e2e.json` | sponsored gas, spam bound, isolation, refusals, refill |
+| `scripts/deploy.ts --anvil`, `contracts/script/Deploy.s.sol` | `results/deploy_ts_anvil.json`, `results/deploy_31337.json` | the stack deploys with libraries linked |
+| `scripts/x3/selftest.ts`; `docs/x3_runbook.md` | `results/x3_selftest.json` | the X3 builders against the account (mainnet run is user-run) |
+| `scripts/rig/rig.ts`, `scripts/rig/selftest.ts` | `results/rig_selftest.json` | testnet-only rig stub |
+
+Changelog: 2026-10-25 INT (ORCH2): sections 17-23 added (watcher + tripwires, recovery, paymaster, lens, library linking,
+voucher TTL rule, scripts / results index).

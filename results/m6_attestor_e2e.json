@@ -39,7 +39,7 @@
       ],
       "attest": 200,
       "tier": "PROVEN",
-      "validUntil": 1792955762,
+      "validUntil": 1792958044,
       "epoch": "1",
       "onChainCheck": true
     },
@@ -53,5 +53,5 @@
     }
   },
   "note": "against the real AgentAccount",
-  "generatedAt": "2026-10-24T19:16:03.138Z"
+  "generatedAt": "2026-10-24T19:54:05.753Z"
 }

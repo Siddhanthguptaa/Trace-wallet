@@ -1,0 +1,65 @@
+{
+  "ok": true,
+  "dailyLimitBaseUnits": "20000000",
+  "explorationCapBaseUnits": "1000000",
+  "phases": [
+    {
+      "name": "A unproven drain",
+      "mode": "combined",
+      "gainBaseUnits": "400000",
+      "frozenAtOp": 5,
+      "ops": 30
+    },
+    {
+      "name": "B forged-PROVEN drain",
+      "mode": "combined",
+      "gainBaseUnits": "5000000",
+      "frozenAtOp": 4,
+      "ops": 14
+    },
+    {
+      "name": "B forged-PROVEN drain, no detector",
+      "mode": "none",
+      "gainBaseUnits": "9000000",
+      "frozenAtOp": null,
+      "ops": 14
+    }
+  ],
+  "lines": [
+    "PHASE 1: all defences on. The agent key is LEAKED to an attacker.",
+    "  leaked agent key (throwaway dev key): 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+    "  wallet balance: 100.00 USDC, daily limit: 20.00 USDC, exploration budget for unknown payees: 1.00 USDC",
+    "  Attack A: drain through an unproven payee",
+    "    op  1: tries 0.20 USDC -> PAID; attacker holds 0.20 USDC",
+    "    op  2: tries 0.20 USDC -> PAID; attacker holds 0.40 USDC",
+    "    op  3: tries 0.20 USDC -> refused / undone; attacker holds 0.40 USDC",
+    "    op  4: tries 0.20 USDC -> refused / undone; attacker holds 0.40 USDC",
+    "    op  5: tries 0.20 USDC -> refused / undone; attacker holds 0.40 USDC   <-- KEY FROZEN",
+    "  -> attacker gained 0.40 USDC (exploration budget 1.00), key frozen at op 5",
+    "  owner reviews and unfreezes the key (only the owner can; the watcher can only freeze)",
+    "  Attack B: the attestor key leaked too, attacker payee forged PROVEN, drain as fast as possible",
+    "    op  1: tries 5.00 USDC -> PAID; attacker holds 5.40 USDC",
+    "    op  2: tries 7.00 USDC -> refused / undone; attacker holds 5.40 USDC",
+    "    op  3: tries 9.00 USDC -> refused / undone; attacker holds 5.40 USDC",
+    "    op  4: tries 6.00 USDC -> refused / undone; attacker holds 5.40 USDC   <-- KEY FROZEN",
+    "  -> attacker gained 5.00 USDC more (total 5.40 USDC), daily limit 20.00 USDC, key frozen at op 4",
+    "PHASE 2: every detector OFF, only the caps. Attack B again.",
+    "  Attack B with no detector",
+    "    op  1: tries 2.00 USDC -> PAID; attacker holds 2.00 USDC",
+    "    op  2: tries 2.00 USDC -> PAID; attacker holds 4.00 USDC",
+    "    op  3: tries 9.00 USDC -> refused / undone; attacker holds 4.00 USDC",
+    "    op  4: tries 9.00 USDC -> refused / undone; attacker holds 4.00 USDC",
+    "    op  5: tries 3.00 USDC -> PAID; attacker holds 7.00 USDC",
+    "    op  6: tries 6.00 USDC -> refused / undone; attacker holds 7.00 USDC",
+    "    op  7: tries 10.00 USDC -> refused / undone; attacker holds 7.00 USDC",
+    "    op  8: tries 5.00 USDC -> refused / undone; attacker holds 7.00 USDC",
+    "    op  9: tries 8.00 USDC -> refused / undone; attacker holds 7.00 USDC",
+    "    op 10: tries 8.00 USDC -> refused / undone; attacker holds 7.00 USDC",
+    "    op 11: tries 2.00 USDC -> PAID; attacker holds 9.00 USDC",
+    "    op 12: tries 4.00 USDC -> refused / undone; attacker holds 9.00 USDC",
+    "    op 13: tries 7.00 USDC -> refused / undone; attacker holds 9.00 USDC",
+    "    op 14: tries 7.00 USDC -> refused / undone; attacker holds 9.00 USDC",
+    "  -> attacker gained 9.00 USDC of the wallet's 100.00 USDC. The caps alone hold it under the 20.00 USDC daily limit.",
+    "RESULT: loss stayed inside the stated bounds in every phase."
+  ]
+}
