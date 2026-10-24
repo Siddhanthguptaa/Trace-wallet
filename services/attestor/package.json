@@ -1,0 +1,30 @@
+{
+  "name": "@hypnexis/attestor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "TRACE attestor: scoring port, tier map, EIP-712 signer, outcome ingestion, flag sender (built in M6).",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "test": "vitest run",
+    "e2e": "tsx scripts/e2e.ts",
+    "vectors": "tsx scripts/vectors.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "@hypnexis/shared": "workspace:*",
+    "hono": "^4.6.0",
+    "viem": "^2.21.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.0"
+  }
+}

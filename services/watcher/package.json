@@ -1,0 +1,23 @@
+{
+  "name": "@hypnexis/watcher",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Hijack watcher (M10, lane FRZ): CUSUM on the agent's spend stream, revert streak, approval-request rate -> freeze(agentKey) through the escalate-only watcher role.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.2"
+  }
+}

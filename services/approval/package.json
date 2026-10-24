@@ -1,0 +1,32 @@
+{
+  "name": "@hypnexis/approval",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Owner approval service (M5, lane APPS): HTTP API, node:sqlite store, eth_call outflow simulation, OutcomeApproval typed data, scripted owner signer, relay.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "test": "vitest run",
+    "e2e": "tsx scripts/e2e.ts",
+    "sign": "tsx scripts/owner-sign.ts",
+    "vectors": "tsx scripts/vectors.ts",
+    "build:sim": "tsx scripts/build-simulator.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "@hypnexis/shared": "workspace:*",
+    "hono": "^4.6.0",
+    "viem": "^2.21.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.0"
+  }
+}
