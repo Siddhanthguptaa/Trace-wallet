@@ -1,0 +1,26 @@
+{
+  "name": "@hypnexis/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared config, EIP-712 types and ERC-4337 v0.8 UserOperation helpers.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./attestor": "./src/attestor/index.ts",
+    "./approval": "./src/approval/index.ts",
+    "./paymaster": "./src/paymaster/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "viem": "^2.21.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.0"
+  }
+}
