@@ -1,0 +1,13 @@
+{
+  "asset": "ETH",
+  "beyondPolicyBaseUnits": 999000000000000000,
+  "card": "gas_burn_griefing",
+  "chainMode": "local",
+  "config": "R1",
+  "legitBlocked": 0,
+  "legitBlockedValue": 0,
+  "legitNeededApproval": 0,
+  "legitProvenBlocked": 0,
+  "lostBaseUnits": 1000000000000000000,
+  "success": true
+}

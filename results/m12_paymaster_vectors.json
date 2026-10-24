@@ -1,0 +1,17 @@
+{
+  "burst": 5000000000000000,
+  "callGasLimit": 300000,
+  "lastRefill": 1800000000,
+  "level": 100000000000000,
+  "maxCost": 630000000000000,
+  "maxFeePerGas": 1000000000,
+  "paymaster": "0xA4AD4f68d0b91CFD19687c881e50f3A00242828c",
+  "paymasterAndData": "0xa4ad4f68d0b91cfd19687c881e50f3a00242828c000000000000000000000000000138800000000000000000000000000000c350",
+  "paymasterPostOpGasLimit": 50000,
+  "paymasterVerificationGasLimit": 80000,
+  "pending": 0,
+  "preVerificationGas": 50000,
+  "ratePerDay": 5000000000000000,
+  "validAfter": 1800009158,
+  "verificationGasLimit": 150000
+}

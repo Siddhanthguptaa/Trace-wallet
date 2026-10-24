@@ -1,0 +1,38 @@
+{
+  "source": "results/forge_m12.json",
+  "suites": 2,
+  "total": 18,
+  "passed": 18,
+  "failed": 0,
+  "skipped": 0,
+  "failedTests": [],
+  "required": [
+    "test_spam_reverting_ops_exhaust_only_own_quota",
+    "test_second_agent_quota_unaffected",
+    "test_sybil_unregistered_rejected",
+    "test_gasPrice_inflation_capped",
+    "test_depositDrain_bounded_by_sum_of_quotas",
+    "M12InvariantTest::invariant_I14"
+  ],
+  "missingRequired": [],
+  "tests": [
+    "test/unit/M12_Invariant.t.sol:M12InvariantTest::invariant_I14_charge_covers_deposit_cost()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::testFuzz_admission_matches_buckets(uint128,uint128,uint128,uint48,uint128,uint128)",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_depositDrain_bounded_by_sum_of_quotas()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_deregister_then_reregister_keeps_spent()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_exhausted_not_due_until_refill()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_gasPrice_inflation_capped()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_gas_limits_capped()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_hooks_only_from_entryPoint()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_maxCost_above_burst_rejected()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_owner_only_admin()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_postOp_gas_floor()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_postOp_refunds_unused()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_second_agent_quota_unaffected()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_spam_reverting_ops_exhaust_only_own_quota()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_staked_owned_funded()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_sybil_unregistered_rejected()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_validation_storage_keyed_by_sender_and_time_free()",
+    "test/unit/M12_Paymaster.t.sol:M12PaymasterTest::test_write_vectors_for_ts_helper()"
+  ]
+}

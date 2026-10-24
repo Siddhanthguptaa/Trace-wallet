@@ -1,0 +1,219 @@
+{
+  "realAccount": true,
+  "chainId": 31337,
+  "ok": true,
+  "passed": 31,
+  "total": 31,
+  "account": "0x88e0111ab32D99d402e95e4035982982CD424ACE",
+  "metrics": {},
+  "rejectionReasons": [
+    "4: FailedOp(0, AA24 signature error)",
+    "9: FailedOp(0, AA24 signature error)",
+    "10: FailedOp(0, AA24 signature error)",
+    "11: FailedOp(0, AA24 signature error)",
+    "12: FailedOp(0, AA24 signature error)",
+    "13: FailedOp(0, AA24 signature error)",
+    "14: FailedOp(0, AA24 signature error)",
+    "15: FailedOp(0, AA24 signature error)",
+    "17: FailedOp(0, AA24 signature error)",
+    "18: FailedOp(0, AA24 signature error)",
+    "19: FailedOp(0, AA24 signature error)",
+    "20: FailedOp(0, AA24 signature error)",
+    "21: FailedOp(0, AA24 signature error)",
+    "25: FailedOp(0, AA25 invalid account nonce)",
+    "26: FailedOp(0, AA24 signature error)",
+    "27: FailedOp(0, AA24 signature error)",
+    "28: FailedOp(0, AA24 signature error)",
+    "29: FailedOp(0, AA24 signature error)",
+    "31: FailedOp(0, AA22 expired or not due)"
+  ],
+  "checks": [
+    {
+      "name": "owner-signed op (execute) through the EntryPoint executes",
+      "expected": "executed",
+      "observed": "executed",
+      "pass": true
+    },
+    {
+      "name": "owner op: the payee received 1 USDC",
+      "expected": "1000000",
+      "observed": "1000000",
+      "pass": true
+    },
+    {
+      "name": "owner op: executeBatch is allowed for the owner",
+      "expected": "executed",
+      "observed": "executed",
+      "pass": true
+    },
+    {
+      "name": "an owner-shaped op signed by a stranger is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "agent: in-policy transfer to an owner-listed payee executes",
+      "expected": "executed",
+      "observed": "executed",
+      "pass": true
+    },
+    {
+      "name": "agent: the Decision is PROVEN / NORMAL track",
+      "expected": "1/0",
+      "observed": "1/0",
+      "pass": true
+    },
+    {
+      "name": "agent: approve the listed ticket shop for the price",
+      "expected": "executed",
+      "observed": "executed",
+      "pass": true
+    },
+    {
+      "name": "agent: buy a ticket for the account itself executes",
+      "expected": "executed",
+      "observed": "executed",
+      "pass": true
+    },
+    {
+      "name": "contracts and functions: a call outside the allowlist (ticket.transferFrom) is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "argument rule: buy(ticket, attacker) is rejected (recipient must be the account)",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "argument rule: setApprovalForAll(attacker) is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "argument rule: approve(attacker, 1) is rejected (spender must be listed)",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "argument rule: approve(listed, MAX) is rejected (LTE per-tx cap)",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "per-transaction limit: transfer 11 USDC (cap 10) is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "allowed recipients: 1 USDC to an unlisted payee is refused (over the exploration per-tx cap)",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "unproven payee: 0.1 USDC executes on the exploration track (UNPROVEN / EXPLORE)",
+      "expected": "executed/2/1",
+      "observed": "executed/2/1",
+      "pass": true
+    },
+    {
+      "name": "admin from the agent path: a self-call to setRecipient is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "admin from the agent path: execute(...) on the account is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "admin from the agent path: EntryPoint.withdrawTo is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "an agent-signed executeBatch (owner entry point) is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "an unknown op kind (a delegatecall-style kind 2) is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "owner-only admin: a stranger cannot change the policy",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "owner-only admin: the agent key cannot change the policy",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "control: a fresh in-policy op executes",
+      "expected": "executed",
+      "observed": "executed",
+      "pass": true
+    },
+    {
+      "name": "replay: the same op again (nonce used) is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "wrong chain id: an op signed for chain id + 1 is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "an op signed by a key with no session is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "a nonce key that does not belong to the session is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "revocation: the revoked key is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "expiry: before validUntil the short-lived session executes",
+      "expected": "executed",
+      "observed": "executed",
+      "pass": true
+    },
+    {
+      "name": "expiry: an op after validUntil is rejected (EntryPoint-enforced; no TIMESTAMP in validation)",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    }
+  ],
+  "generatedAt": "2026-10-24T19:09:31.658Z"
+}

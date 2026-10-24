@@ -1,0 +1,1335 @@
+{
+  "meta": {
+    "inputs": [
+      "x6_runs_combined.jsonl",
+      "x6_runs_tripwires.jsonl",
+      "x6_runs_watcher.jsonl",
+      "x6_runs_none.jsonl"
+    ],
+    "totalRecords": 156,
+    "scoredRecords": 156,
+    "pendingOrError": 0,
+    "seeds": [
+      1,
+      2,
+      3
+    ],
+    "modes": {
+      "combined": "combined = tripwires + watcher; tripwires = on-chain only; watcher = off-chain only; none = caps only",
+      "tripwires": "combined = tripwires + watcher; tripwires = on-chain only; watcher = off-chain only; none = caps only",
+      "watcher": "combined = tripwires + watcher; tripwires = on-chain only; watcher = off-chain only; none = caps only",
+      "none": "combined = tripwires + watcher; tripwires = on-chain only; watcher = off-chain only; none = caps only"
+    },
+    "note": "Counts over our own scripted scenarios and workloads: self-graded, synthetic. Detection is not containment; the caps hold with no detector (mode none)."
+  },
+  "primaryMode": "combined",
+  "byMode": {
+    "combined": {
+      "overall": {
+        "hijackRuns": 27,
+        "reachedWalletRuns": 18,
+        "detection": {
+          "hit": 18,
+          "runs": 18,
+          "rate": 1.0,
+          "ci95": [
+            0.8241,
+            1.0
+          ]
+        },
+        "containment": {
+          "hit": 27,
+          "runs": 27,
+          "rate": 1.0,
+          "ci95": [
+            0.8754,
+            1.0
+          ]
+        },
+        "legitRuns": 12,
+        "falseFreeze": {
+          "hit": 0,
+          "runs": 12,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.2425
+          ]
+        },
+        "maxAttackerGainBaseUnits": 16803696,
+        "maxUnprovenGainBaseUnits": 497800,
+        "maxLossBeforeFreezeBaseUnits": 16803696,
+        "globalCap": 20000000,
+        "exploreCap": 1000000,
+        "lossAssertHeld": true,
+        "lossAssertRuns": 27
+      },
+      "detectionByScenario": {
+        "H1": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 5.67,
+          "meanLossBeforeFreezeBaseUnits": 426066.7,
+          "maxLossBaseUnits": 479200,
+          "freezeTriggers": {
+            "T3_strikes": 3
+          }
+        },
+        "H2": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 25.67,
+          "meanLossBeforeFreezeBaseUnits": 14572975.0,
+          "maxLossBaseUnits": 16803696,
+          "freezeTriggers": {
+            "T3_strikes": 3
+          }
+        },
+        "H3": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 6.0,
+          "meanLossBeforeFreezeBaseUnits": 468600.0,
+          "maxLossBaseUnits": 497800,
+          "freezeTriggers": {
+            "T3_strikes": 3
+          }
+        },
+        "H4": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H5": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H6": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 7.67,
+          "meanLossBeforeFreezeBaseUnits": 0.0,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {
+            "revert_streak": 3
+          }
+        },
+        "H7": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H8": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 7.0,
+          "meanLossBeforeFreezeBaseUnits": 0.0,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {
+            "approval_rate": 3
+          }
+        },
+        "H9": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 5.0,
+          "meanLossBeforeFreezeBaseUnits": 8333333.3,
+          "maxLossBaseUnits": 10000000,
+          "freezeTriggers": {
+            "T3_strikes": 3
+          }
+        }
+      },
+      "falseFreezeByWorkload": {
+        "L1": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L2": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L3": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L4": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        }
+      }
+    },
+    "tripwires": {
+      "overall": {
+        "hijackRuns": 27,
+        "reachedWalletRuns": 18,
+        "detection": {
+          "hit": 12,
+          "runs": 18,
+          "rate": 0.6667,
+          "ci95": [
+            0.4375,
+            0.8372
+          ]
+        },
+        "containment": {
+          "hit": 27,
+          "runs": 27,
+          "rate": 1.0,
+          "ci95": [
+            0.8754,
+            1.0
+          ]
+        },
+        "legitRuns": 12,
+        "falseFreeze": {
+          "hit": 0,
+          "runs": 12,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.2425
+          ]
+        },
+        "maxAttackerGainBaseUnits": 16803696,
+        "maxUnprovenGainBaseUnits": 497800,
+        "maxLossBeforeFreezeBaseUnits": 16803696,
+        "globalCap": 20000000,
+        "exploreCap": 1000000,
+        "lossAssertHeld": true,
+        "lossAssertRuns": 27
+      },
+      "detectionByScenario": {
+        "H1": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 5.67,
+          "meanLossBeforeFreezeBaseUnits": 426066.7,
+          "maxLossBaseUnits": 479200,
+          "freezeTriggers": {
+            "T3_strikes": 3
+          }
+        },
+        "H2": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 25.67,
+          "meanLossBeforeFreezeBaseUnits": 14572975.0,
+          "maxLossBaseUnits": 16803696,
+          "freezeTriggers": {
+            "T3_strikes": 3
+          }
+        },
+        "H3": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 6.0,
+          "meanLossBeforeFreezeBaseUnits": 468600.0,
+          "maxLossBaseUnits": 497800,
+          "freezeTriggers": {
+            "T3_strikes": 3
+          }
+        },
+        "H4": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H5": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H6": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H7": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H8": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H9": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 5.0,
+          "meanLossBeforeFreezeBaseUnits": 8333333.3,
+          "maxLossBaseUnits": 10000000,
+          "freezeTriggers": {
+            "T3_strikes": 3
+          }
+        }
+      },
+      "falseFreezeByWorkload": {
+        "L1": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L2": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L3": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L4": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        }
+      }
+    },
+    "watcher": {
+      "overall": {
+        "hijackRuns": 27,
+        "reachedWalletRuns": 18,
+        "detection": {
+          "hit": 16,
+          "runs": 18,
+          "rate": 0.8889,
+          "ci95": [
+            0.672,
+            0.969
+          ]
+        },
+        "containment": {
+          "hit": 27,
+          "runs": 27,
+          "rate": 1.0,
+          "ci95": [
+            0.8754,
+            1.0
+          ]
+        },
+        "legitRuns": 12,
+        "falseFreeze": {
+          "hit": 0,
+          "runs": 12,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.2425
+          ]
+        },
+        "maxAttackerGainBaseUnits": 17853927,
+        "maxUnprovenGainBaseUnits": 497800,
+        "maxLossBeforeFreezeBaseUnits": 15596410,
+        "globalCap": 20000000,
+        "exploreCap": 1000000,
+        "lossAssertHeld": true,
+        "lossAssertRuns": 27
+      },
+      "detectionByScenario": {
+        "H1": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 9.67,
+          "meanLossBeforeFreezeBaseUnits": 426066.7,
+          "maxLossBaseUnits": 479200,
+          "freezeTriggers": {
+            "revert_streak": 3
+          }
+        },
+        "H2": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 2,
+            "runs": 3,
+            "rate": 0.6667,
+            "ci95": [
+              0.2077,
+              0.9385
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 33.5,
+          "meanLossBeforeFreezeBaseUnits": 14589578.0,
+          "maxLossBaseUnits": 17853927,
+          "freezeTriggers": {
+            "revert_cusum": 1,
+            "revert_streak": 1
+          }
+        },
+        "H3": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 8.0,
+          "meanLossBeforeFreezeBaseUnits": 468600.0,
+          "maxLossBaseUnits": 497800,
+          "freezeTriggers": {
+            "revert_streak": 3
+          }
+        },
+        "H4": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H5": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H6": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 8.33,
+          "meanLossBeforeFreezeBaseUnits": 0.0,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {
+            "revert_streak": 3
+          }
+        },
+        "H7": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H8": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 7.0,
+          "meanLossBeforeFreezeBaseUnits": 0.0,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {
+            "approval_rate": 3
+          }
+        },
+        "H9": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 2,
+            "runs": 3,
+            "rate": 0.6667,
+            "ci95": [
+              0.2077,
+              0.9385
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": 10.5,
+          "meanLossBeforeFreezeBaseUnits": 9500000.0,
+          "maxLossBaseUnits": 10000000,
+          "freezeTriggers": {
+            "revert_cusum": 1,
+            "revert_streak": 1
+          }
+        }
+      },
+      "falseFreezeByWorkload": {
+        "L1": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L2": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L3": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L4": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        }
+      }
+    },
+    "none": {
+      "overall": {
+        "hijackRuns": 27,
+        "reachedWalletRuns": 18,
+        "detection": {
+          "hit": 0,
+          "runs": 18,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.1759
+          ]
+        },
+        "containment": {
+          "hit": 27,
+          "runs": 27,
+          "rate": 1.0,
+          "ci95": [
+            0.8754,
+            1.0
+          ]
+        },
+        "legitRuns": 12,
+        "falseFreeze": {
+          "hit": 0,
+          "runs": 12,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.2425
+          ]
+        },
+        "maxAttackerGainBaseUnits": 18111960,
+        "maxUnprovenGainBaseUnits": 499600,
+        "maxLossBeforeFreezeBaseUnits": 0,
+        "globalCap": 20000000,
+        "exploreCap": 1000000,
+        "lossAssertHeld": true,
+        "lossAssertRuns": 27
+      },
+      "detectionByScenario": {
+        "H1": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 499600,
+          "freezeTriggers": {}
+        },
+        "H2": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 18111960,
+          "freezeTriggers": {}
+        },
+        "H3": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 497800,
+          "freezeTriggers": {}
+        },
+        "H4": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H5": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H6": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H7": {
+          "runs": 3,
+          "reachedWallet": 0,
+          "detection": {
+            "hit": 0,
+            "runs": 0,
+            "rate": null,
+            "ci95": null
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H8": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 0,
+          "freezeTriggers": {}
+        },
+        "H9": {
+          "runs": 3,
+          "reachedWallet": 3,
+          "detection": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "containment": {
+            "hit": 3,
+            "runs": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "meanOpsToFreeze": null,
+          "meanLossBeforeFreezeBaseUnits": null,
+          "maxLossBaseUnits": 10000000,
+          "freezeTriggers": {}
+        }
+      },
+      "falseFreezeByWorkload": {
+        "L1": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L2": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L3": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        },
+        "L4": {
+          "falseFreeze": {
+            "hit": 0,
+            "runs": 3,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.5615
+            ]
+          },
+          "triggers": {}
+        }
+      }
+    }
+  },
+  "errors": []
+}

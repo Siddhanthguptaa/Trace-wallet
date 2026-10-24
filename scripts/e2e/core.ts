@@ -27,8 +27,14 @@ async function main(): Promise<void> {
     const attacker = addr('attacker');
     const shop = w.api; // owner-listed
     const sub = (op: Parameters<typeof submitOps>[2][number]) => submitOps(w.d, w.stack, [op], relayer, DEV.relayer);
-    const state = (r: { validated: boolean; success: boolean; has: (n: string) => boolean }) =>
-      !r.validated ? 'rejected' : r.has('PolicyBlocked') ? 'blocked' : r.success ? 'executed' : 'reverted';
+    const reasons: string[] = [];
+    const state = (r: { validated: boolean; success: boolean; reason?: string; has: (n: string) => boolean }) => {
+      if (!r.validated) {
+        reasons.push(`${checks.length + 1}: ${r.reason ?? ''}`);
+        return 'rejected';
+      }
+      return r.has('PolicyBlocked') ? 'blocked' : r.success ? 'executed' : 'reverted';
+    };
     const agentOp = async (target: `0x${string}`, data: Hex, o: { value?: bigint; key?: Hex } = {}) => {
       const s = await signAgentOp(w.d, w.stack, w.chainId, { account: w.account, agentKey: o.key ?? DEV.agent, target, data, value: o.value });
       return { ...s, r: await sub(s.op) };
@@ -114,7 +120,7 @@ async function main(): Promise<void> {
     add('expiry: an op after validUntil is rejected (EntryPoint-enforced; no TIMESTAMP in validation)', 'rejected', state(after.r));
 
     const ok = checks.every((c) => c.pass);
-    const out = { realAccount: true, chainId: w.chainId, ok, passed: checks.filter((c) => c.pass).length, total: checks.length, account: w.account, metrics, checks, generatedAt: new Date().toISOString() };
+    const out = { realAccount: true, chainId: w.chainId, ok, passed: checks.filter((c) => c.pass).length, total: checks.length, account: w.account, metrics, rejectionReasons: reasons, checks, generatedAt: new Date().toISOString() };
     mkdirSync(join(BUILD_ROOT, 'results'), { recursive: true });
     writeFileSync(join(BUILD_ROOT, 'results', 'm1_core_e2e.json'), `${JSON.stringify(out, null, 2)}\n`);
     for (const c of checks) if (!c.pass) console.log(`FAIL ${c.name}: expected ${c.expected}, observed ${c.observed}`);

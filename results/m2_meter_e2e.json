@@ -1,0 +1,83 @@
+{
+  "realAccount": true,
+  "ok": true,
+  "dailyLimit": "20000000",
+  "passed": 11,
+  "total": 11,
+  "metrics": {
+    "midnightExecutedBefore": 5,
+    "midnightExecutedAfter": 0,
+    "midnightWindowOutflow": "10000000",
+    "multiKeyExecuted": "5/0/0",
+    "multiKeyOutflow": "10000000"
+  },
+  "checks": [
+    {
+      "name": "greedy merchant: buy() pulls 10x (20 USDC) through the owner-granted allowance: blocked",
+      "expected": "blocked",
+      "observed": "blocked",
+      "pass": true
+    },
+    {
+      "name": "greedy merchant: nothing reached the merchant treasury",
+      "expected": "0",
+      "observed": "0",
+      "pass": true
+    },
+    {
+      "name": "once: approve(grocery, 5 USDC) executes",
+      "expected": "executed",
+      "observed": "executed",
+      "pass": true
+    },
+    {
+      "name": "once: the shop pulls 5 USDC through that allowance (order) and executes",
+      "expected": "executed",
+      "observed": "executed",
+      "pass": true
+    },
+    {
+      "name": "once: a further 5 USDC payment still fits (the unit was counted once, 10 USDC total)",
+      "expected": "executed",
+      "observed": "executed",
+      "pass": true
+    },
+    {
+      "name": "once: one more unit is blocked (bucket empty)",
+      "expected": "blocked",
+      "observed": "blocked",
+      "pass": true
+    },
+    {
+      "name": "midnight: window outflow across UTC midnight <= the daily limit (burst + 24 h refill)",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "midnight: a calendar-day cap would have allowed 2x; here the second side moved at most one payment",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "midnight: the first side spent the burst (5 x 2 USDC)",
+      "expected": "5",
+      "observed": "5",
+      "pass": true
+    },
+    {
+      "name": "multi-key: 3 keys x 12 payments move <= the daily limit in total (shared global bucket)",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "multi-key: the 2nd and 3rd key got nothing more once the global bucket was spent",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    }
+  ],
+  "generatedAt": "2026-10-24T19:11:12.855Z"
+}

@@ -1,0 +1,40 @@
+{
+  "campaigns": {
+    "agent": {
+      "fuzzRuns": 257,
+      "runsWithOwnerMove": 256,
+      "runsWithAgentMove": 250,
+      "runsWithUnauthorizedAttempt": 257,
+      "runsWithRecovery": 14,
+      "ownerMoves": 1379,
+      "agentMoves": 924,
+      "unauthorizedAttempts": 9114,
+      "recoveriesExecuted": 14,
+      "forgedOrReplayedOpsAccepted": 0
+    },
+    "authority": {
+      "fuzzRuns": 258,
+      "runsWithOwnerMove": 256,
+      "runsWithAgentMove": 248,
+      "runsWithUnauthorizedAttempt": 258,
+      "runsWithRecovery": 16,
+      "ownerMoves": 1379,
+      "agentMoves": 926,
+      "unauthorizedAttempts": 9123,
+      "recoveriesExecuted": 16,
+      "forgedOrReplayedOpsAccepted": 0
+    },
+    "owner": {
+      "fuzzRuns": 257,
+      "runsWithOwnerMove": 256,
+      "runsWithAgentMove": 243,
+      "runsWithUnauthorizedAttempt": 257,
+      "runsWithRecovery": 13,
+      "ownerMoves": 1379,
+      "agentMoves": 909,
+      "unauthorizedAttempts": 9107,
+      "recoveriesExecuted": 13,
+      "forgedOrReplayedOpsAccepted": 0
+    }
+  }
+}

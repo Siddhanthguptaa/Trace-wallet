@@ -1,0 +1,472 @@
+{
+  "H1": false,
+  "rule": "H1 iff TRACE+EB(B*=5%) moves the fraud vs served-honest frontier of the 4 baselines in the partitioned regime for >= 3 of 4 attacks; moves = no convex combination of baseline 10-seed means has fraud <= and served-honest >= the EB point, in >= 95% of 1,000 paired seed-bootstrap resamples",
+  "regime": "partitioned",
+  "Bstar": 5,
+  "attacksMovedAtBstar": 0,
+  "attacksNeeded": 3,
+  "perRegimeAttack": [
+    {
+      "regime": "partitioned",
+      "attack": "strategic-default",
+      "movesAtBstar": false,
+      "bootstrapFractionAtBstar": 0.0,
+      "pointEstimateMovesAtBstar": false,
+      "ebAtBstar": {
+        "fraud": 23.8,
+        "servedHonest": 66.5,
+        "mr": 0.3587
+      },
+      "dominatedOutrightByAtBstar": [
+        "TRACE-full",
+        "REPUTATION",
+        "EIGENTRUST"
+      ],
+      "exploreSpendShareAtBstar": 0.0476,
+      "baselines": {
+        "TRACE-full": {
+          "fraud": 5.5,
+          "servedHonest": 172.7,
+          "mr": 0.2973
+        },
+        "TRACE-no-bandit": {
+          "fraud": 29.5,
+          "servedHonest": 33.0,
+          "mr": 0.3353
+        },
+        "REPUTATION": {
+          "fraud": 6.1,
+          "servedHonest": 144.6,
+          "mr": 0.3057
+        },
+        "EIGENTRUST": {
+          "fraud": 8.3,
+          "servedHonest": 164.1,
+          "mr": 0.299
+        }
+      },
+      "sweep": {
+        "0": {
+          "moves": false,
+          "bootstrapFraction": 0.0,
+          "pointEstimateMoves": false,
+          "fraud": 44.2,
+          "servedHonest": 18.2,
+          "mr": 0.3857,
+          "exploreSpendShare": 0.0
+        },
+        "1": {
+          "moves": false,
+          "bootstrapFraction": 0.0,
+          "pointEstimateMoves": false,
+          "fraud": 26.0,
+          "servedHonest": 28.3,
+          "mr": 0.3773,
+          "exploreSpendShare": 0.0087
+        },
+        "2": {
+          "moves": false,
+          "bootstrapFraction": 0.0,
+          "pointEstimateMoves": false,
+          "fraud": 32.2,
+          "servedHonest": 38.9,
+          "mr": 0.3633,
+          "exploreSpendShare": 0.0185
+        },
+        "5": {
+          "moves": false,
+          "bootstrapFraction": 0.0,
+          "pointEstimateMoves": false,
+          "fraud": 23.8,
+          "servedHonest": 66.5,
+          "mr": 0.3587,
+          "exploreSpendShare": 0.0476
+        },
+        "10": {
+          "moves": false,
+          "bootstrapFraction": 0.0,
+          "pointEstimateMoves": false,
+          "fraud": 16.9,
+          "servedHonest": 93.8,
+          "mr": 0.3397,
+          "exploreSpendShare": 0.0962
+        }
+      }
+    },
+    {
+      "regime": "partitioned",
+      "attack": "collusion-ring",
+      "movesAtBstar": false,
+      "bootstrapFractionAtBstar": 0.001,
+      "pointEstimateMovesAtBstar": false,
+      "ebAtBstar": {
+        "fraud": 76.4,
+        "servedHonest": 65.8,
+        "mr": 0.2473
+      },
+      "dominatedOutrightByAtBstar": [
+        "TRACE-full",
+        "REPUTATION"
+      ],
+      "exploreSpendShareAtBstar": 0.0476,
+      "baselines": {
+        "TRACE-full": {
+          "fraud": 46.2,
+          "servedHonest": 175.4,
+          "mr": 0.2847
+        },
+        "TRACE-no-bandit": {
+          "fraud": 42.8,
+          "servedHonest": 37.0,
+          "mr": 0.2113
+        },
+        "REPUTATION": {
+          "fraud": 59.4,
+          "servedHonest": 148.5,
+          "mr": 0.2843
+        },
+        "EIGENTRUST": {
+          "fraud": 315.0,
+          "servedHonest": 58.3,
+          "mr": 0.632
+        }
+      },
+      "sweep": {
+        "0": {
+          "moves": false,
+          "bootstrapFraction": 0.0,
+          "pointEstimateMoves": false,
+          "fraud": 78.2,
+          "servedHonest": 22.7,
+          "mr": 0.2307,
+          "exploreSpendShare": 0.0
+        },
+        "1": {
+          "moves": false,
+          "bootstrapFraction": 0.0,
+          "pointEstimateMoves": false,
+          "fraud": 90.9,
+          "servedHonest": 32.3,
+          "mr": 0.2433,
+          "exploreSpendShare": 0.0083
+        },
+        "2": {
+          "moves": false,
+          "bootstrapFraction": 0.0,
+          "pointEstimateMoves": false,
+          "fraud": 78.1,
+          "servedHonest": 41.4,
+          "mr": 0.226,
+          "exploreSpendShare": 0.018
+        },
+        "5": {
+          "moves": false,
+          "bootstrapFraction": 0.001,
+          "pointEstimateMoves": false,
+          "fraud": 76.4,
+          "servedHonest": 65.8,
+          "mr": 0.2473,
+          "exploreSpendShare": 0.0476
+        },
+        "10": {
+          "moves": false,
+          "bootstrapFraction": 0.036,
+          "pointEstimateMoves": false,
+          "fraud": 54.8,
+          "servedHonest": 93.6,
+          "mr": 0.2477,
+          "exploreSpendShare": 0.0957
+        }
+      }
+    },
+    {
+      "regime": "partitioned",
+      "attack": "sybil-cluster",
+      "movesAtBstar": false,
+      "bootstrapFractionAtBstar": 0.073,
+      "pointEstimateMovesAtBstar": false,
+      "ebAtBstar": {
+        "fraud": 24.7,
+        "servedHonest": 69.7,
+        "mr": 0.2787
+      },
+      "dominatedOutrightByAtBstar": [
+        "TRACE-full",
+        "REPUTATION"
+      ],
+      "exploreSpendShareAtBstar": 0.0476,
+      "baselines": {
+        "TRACE-full": {
+          "fraud": 18.7,
+          "servedHonest": 184.7,
+          "mr": 0.231
+        },
+        "TRACE-no-bandit": {
+          "fraud": 23.9,
+          "servedHonest": 34.4,
+          "mr": 0.2477
+        },
+        "REPUTATION": {
+          "fraud": 21.4,
+          "servedHonest": 147.3,
+          "mr": 0.2893
+        },
+        "EIGENTRUST": {
+          "fraud": 84.7,
+          "servedHonest": 54.4,
+          "mr": 0.8127
+        }
+      },
+      "sweep": {
+        "0": {
+          "moves": false,
+          "bootstrapFraction": 0.024,
+          "pointEstimateMoves": false,
+          "fraud": 37.8,
+          "servedHonest": 23.0,
+          "mr": 0.257,
+          "exploreSpendShare": 0.0
+        },
+        "1": {
+          "moves": false,
+          "bootstrapFraction": 0.171,
+          "pointEstimateMoves": false,
+          "fraud": 25.0,
+          "servedHonest": 31.9,
+          "mr": 0.2927,
+          "exploreSpendShare": 0.0086
+        },
+        "2": {
+          "moves": false,
+          "bootstrapFraction": 0.32,
+          "pointEstimateMoves": false,
+          "fraud": 20.3,
+          "servedHonest": 43.2,
+          "mr": 0.28,
+          "exploreSpendShare": 0.0183
+        },
+        "5": {
+          "moves": false,
+          "bootstrapFraction": 0.073,
+          "pointEstimateMoves": false,
+          "fraud": 24.7,
+          "servedHonest": 69.7,
+          "mr": 0.2787,
+          "exploreSpendShare": 0.0476
+        },
+        "10": {
+          "moves": false,
+          "bootstrapFraction": 0.008,
+          "pointEstimateMoves": false,
+          "fraud": 27.1,
+          "servedHonest": 99.8,
+          "mr": 0.2763,
+          "exploreSpendShare": 0.0956
+        }
+      }
+    },
+    {
+      "regime": "partitioned",
+      "attack": "game-theoretic",
+      "movesAtBstar": false,
+      "bootstrapFractionAtBstar": 0.0,
+      "pointEstimateMovesAtBstar": false,
+      "ebAtBstar": {
+        "fraud": 72.4,
+        "servedHonest": 69.9,
+        "mr": 0.196
+      },
+      "dominatedOutrightByAtBstar": [
+        "EIGENTRUST"
+      ],
+      "exploreSpendShareAtBstar": 0.0475,
+      "baselines": {
+        "TRACE-full": {
+          "fraud": 84.9,
+          "servedHonest": 177.5,
+          "mr": 0.279
+        },
+        "TRACE-no-bandit": {
+          "fraud": 54.4,
+          "servedHonest": 37.9,
+          "mr": 0.1463
+        },
+        "REPUTATION": {
+          "fraud": 78.5,
+          "servedHonest": 151.7,
+          "mr": 0.25
+        },
+        "EIGENTRUST": {
+          "fraud": 43.5,
+          "servedHonest": 115.0,
+          "mr": 0.1907
+        }
+      },
+      "sweep": {
+        "0": {
+          "moves": false,
+          "bootstrapFraction": 0.022,
+          "pointEstimateMoves": false,
+          "fraud": 61.9,
+          "servedHonest": 27.1,
+          "mr": 0.149,
+          "exploreSpendShare": 0.0
+        },
+        "1": {
+          "moves": false,
+          "bootstrapFraction": 0.001,
+          "pointEstimateMoves": false,
+          "fraud": 64.6,
+          "servedHonest": 35.6,
+          "mr": 0.173,
+          "exploreSpendShare": 0.0086
+        },
+        "2": {
+          "moves": false,
+          "bootstrapFraction": 0.01,
+          "pointEstimateMoves": false,
+          "fraud": 62.5,
+          "servedHonest": 44.7,
+          "mr": 0.1737,
+          "exploreSpendShare": 0.0184
+        },
+        "5": {
+          "moves": false,
+          "bootstrapFraction": 0.0,
+          "pointEstimateMoves": false,
+          "fraud": 72.4,
+          "servedHonest": 69.9,
+          "mr": 0.196,
+          "exploreSpendShare": 0.0475
+        },
+        "10": {
+          "moves": false,
+          "bootstrapFraction": 0.0,
+          "pointEstimateMoves": false,
+          "fraud": 77.5,
+          "servedHonest": 93.9,
+          "mr": 0.2303,
+          "exploreSpendShare": 0.0955
+        }
+      }
+    }
+  ],
+  "sweepB": [
+    0,
+    1,
+    2,
+    5,
+    10
+  ],
+  "baselines": [
+    "TRACE-full",
+    "TRACE-no-bandit",
+    "REPUTATION",
+    "EIGENTRUST"
+  ],
+  "nCells": 360,
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51
+  ],
+  "bootstrap": {
+    "resamples": 1000,
+    "rngSeed": 20261024,
+    "paired": true,
+    "threshold": 0.95
+  },
+  "lp": "exact 2-D reduction (segment-quadrant test over all baseline pairs); simplex-grid cross-check disagreements: 0",
+  "metrics": {
+    "fraud": "sats paid to malicious providers on jobs that defaulted, summed over the 5 buyers",
+    "servedHonest": "distinct honest providers given >= 1 job, summed over the 5 buyer sessions (each session draws its own market of 700 honest providers)"
+  },
+  "cut": "FASTPLAN cut 4: partitioned regime only (360 cells); the sparse-centralized regime was not run",
+  "unitCaveat": "sats on a simulated Lightning market (TRACE simulator); informs the wallet's design and default B, not a measurement of the wallet",
+  "sanity": {
+    "note": "reported, not a gate. Paper Table 9 partitioned fraud is n=5 seeds from the author's single-process worker; ours is n=10 with one process per buyer session.",
+    "fraud": {
+      "TRACE-full": {
+        "strategic-default": {
+          "ours": 5.5,
+          "paperTable9": 6.4
+        },
+        "collusion-ring": {
+          "ours": 46.2,
+          "paperTable9": 44.6
+        },
+        "sybil-cluster": {
+          "ours": 18.7,
+          "paperTable9": 24.2
+        },
+        "game-theoretic": {
+          "ours": 84.9,
+          "paperTable9": 86.8
+        }
+      },
+      "TRACE-no-bandit": {
+        "strategic-default": {
+          "ours": 29.5,
+          "paperTable9": 32.0
+        },
+        "collusion-ring": {
+          "ours": 42.8,
+          "paperTable9": 51.6
+        },
+        "sybil-cluster": {
+          "ours": 23.9,
+          "paperTable9": 32.8
+        },
+        "game-theoretic": {
+          "ours": 54.4,
+          "paperTable9": 64.4
+        }
+      },
+      "REPUTATION": {
+        "strategic-default": {
+          "ours": 6.1,
+          "paperTable9": 18.0
+        },
+        "collusion-ring": {
+          "ours": 59.4,
+          "paperTable9": 55.4
+        },
+        "sybil-cluster": {
+          "ours": 21.4,
+          "paperTable9": 20.0
+        },
+        "game-theoretic": {
+          "ours": 78.5,
+          "paperTable9": 85.0
+        }
+      },
+      "EIGENTRUST": {
+        "strategic-default": {
+          "ours": 8.3,
+          "paperTable9": 8.2
+        },
+        "collusion-ring": {
+          "ours": 315.0,
+          "paperTable9": 291.0
+        },
+        "sybil-cluster": {
+          "ours": 84.7,
+          "paperTable9": 103.8
+        },
+        "game-theoretic": {
+          "ours": 43.5,
+          "paperTable9": 47.6
+        }
+      }
+    }
+  },
+  "source": "sim/results/x4_cells.jsonl",
+  "generatedAt": "2026-10-24T14:12:12.904717+00:00"
+}

@@ -1,0 +1,89 @@
+{
+  "target": "AgentAccount (contracts/out, libraries linked) + EntryPoint v0.8 + StubToken / StubShop",
+  "realAccount": true,
+  "chainId": 31337,
+  "ok": true,
+  "passed": 13,
+  "total": 13,
+  "checks": [
+    {
+      "name": "valid approval executes (control)",
+      "expected": "included/success/moved=3000000",
+      "observed": "included/success/moved=3000000",
+      "pass": true
+    },
+    {
+      "name": "replay of the executed op is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "outflow above maxOutflow (+1 unit) is blocked, nothing moves",
+      "expected": "included/blocked/moved=0",
+      "observed": "included/blocked/moved=0",
+      "pass": true
+    },
+    {
+      "name": "empty maxOutflow (missing asset = 0) blocks any outflow",
+      "expected": "included/blocked/moved=0",
+      "observed": "included/blocked/moved=0",
+      "pass": true
+    },
+    {
+      "name": "approval signed for another chain is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "approval signed for another account is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "approval of order(1) on an op carrying order(2) is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "expired approval (validUntil in the past) is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "validUntil = 0 (\"no expiry\") is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "approval signed by the agent key is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "approval whose nonce the owner cancelled is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "a fresh op reusing the cancelled approval nonce is rejected",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "a fresh valid approval (new owner-chosen nonce) still executes",
+      "expected": "included/moved=3000000",
+      "observed": "included/moved=3000000",
+      "pass": true
+    }
+  ],
+  "generatedAt": "2026-10-24T18:59:29.886Z"
+}

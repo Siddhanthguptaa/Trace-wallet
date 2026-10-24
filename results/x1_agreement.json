@@ -1,0 +1,14 @@
+{
+  "cellsCompared": 49,
+  "disagreements": 0,
+  "foundryOnly": 0,
+  "shooterOnly": 0,
+  "fieldsCompared": [
+    "lostBaseUnits",
+    "beyondPolicyBaseUnits",
+    "legitBlocked",
+    "legitNeededApproval"
+  ],
+  "gasCardRule": "lost within 2%, beyond-policy equal on zero / non-zero (the readers use different addresses, so calldata gas differs)",
+  "disagreementList": []
+}

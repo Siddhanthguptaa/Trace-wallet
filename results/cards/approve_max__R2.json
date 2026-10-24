@@ -1,0 +1,13 @@
+{
+  "asset": "USDC",
+  "beyondPolicyBaseUnits": 94900000,
+  "card": "approve_max",
+  "chainMode": "local",
+  "config": "R2",
+  "legitBlocked": 3,
+  "legitBlockedValue": 4150000,
+  "legitNeededApproval": 0,
+  "legitProvenBlocked": 2,
+  "lostBaseUnits": 94900000,
+  "success": true
+}

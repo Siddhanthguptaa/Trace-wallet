@@ -1,0 +1,37 @@
+{
+  "checkedAt": "2026-10-24T13:09:39+00:00",
+  "forge": "forge Version: 1.8.6",
+  "anvil": "anvil Version: 1.8.6",
+  "cast": "cast Version: 1.8.6",
+  "halmos": "halmos 0.3.3",
+  "slither": "0.11.6",
+  "node": "v24.11.0",
+  "pnpm": "11.1.2",
+  "python": "3.11.9",
+  "uv": "uv 0.11.29 (901092ee1 2026-07-15 x86_64-pc-windows-msvc)",
+  "foundryBin": "C:\\Users\\siddh\\.foundry\\bin",
+  "ollamaModels": [
+    "qwen2.5-coder:7b",
+    "nomic-embed-text:latest",
+    "llama3:latest"
+  ],
+  "baseRpc": "https://mainnet.base.org",
+  "baseSepoliaRpc": "https://sepolia.base.org",
+  "baseChainId": 8453,
+  "baseSepoliaChainId": 84532,
+  "baseHead": 53029027,
+  "forkBlock": 53026000,
+  "entryPointV08CodeBytes": 21738,
+  "entryPointV08CodeBytesSepolia": 21738,
+  "entryPointV08CodeBytesAtForkBlock": 21738,
+  "entryPointV08HasCode": true,
+  "entryPointDomain": {
+    "name": "ERC4337",
+    "version": "1",
+    "chainId": 8453
+  },
+  "usdcVersion": "2",
+  "usdcVersionSepolia": "2",
+  "usdcVersionAtForkBlock": "2",
+  "permit2CodeBytes": 9152
+}

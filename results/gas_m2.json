@@ -1,0 +1,10 @@
+{
+  "case": "agent USDC transfer to a listed shop via EntryPoint.handleOps",
+  "chainMode": "local",
+  "meterHooksGasAllCold": 125314,
+  "meterOverheadGas": 155808,
+  "opGasMetered": 348414,
+  "opGasNoMeter": 192606,
+  "trackedSpenders": 4,
+  "trackedTokens": 3
+}

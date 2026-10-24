@@ -1,0 +1,11 @@
+{
+ "source": "contracts/test/unit/M11_I12.t.sol",
+ "runs_logged": 65,
+ "proposals_ok": 195,
+ "approvals_ok": 176,
+ "vetoes_ok": 70,
+ "recoveries_ok": 14,
+ "runs_with_recovery": 13,
+ "violations": 0,
+ "note": "invariant_I12_* passed in results/forge_m11.json; violations=0 is asserted by the invariant"
+}

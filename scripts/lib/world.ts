@@ -57,6 +57,8 @@ export interface WorldOptions {
   greedy?: boolean;
   extraAgents?: Hex[];
   sig1271Mode?: number;
+  /** push the freeze tripwires (T1-T3) out of reach so only the meter / buckets bound the agent (M2-style isolation) */
+  noTripwires?: boolean;
 }
 
 export async function makeWorld(o: WorldOptions = {}): Promise<World> {
@@ -90,6 +92,12 @@ export async function makeWorld(o: WorldOptions = {}): Promise<World> {
   for (const k of [agent, ...(o.extraAgents ?? []).map((x) => privateKeyToAccount(x).address)]) await own('setPolicy', [k, pol]);
   await d.send(usdc, usdcArt.abi, 'mint', [account, 100_000_000n]);
   await own('addDeposit', [], 10n ** 18n);
+  if (o.noTripwires) {
+    const key = (n: string) => keccak256(toBytes(`hypnexis.freeze.${n}`));
+    await own('setFreezeParam', [key('velocityBps'), 10_000n]);
+    await own('setFreezeParam', [key('sprayMax'), 1_000_000n]);
+    await own('setFreezeParam', [key('strikeMax'), 1_000_000n]);
+  }
   return {
     anvil,
     d,

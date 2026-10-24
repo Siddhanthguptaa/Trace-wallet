@@ -1,0 +1,70 @@
+{
+  "target": "AgentAccount (contracts/out, libraries linked) + EntryPoint v0.8 + StubToken / StubShop",
+  "realAccount": true,
+  "chainMode": "local",
+  "chainId": 31337,
+  "approved": "executed",
+  "tampered": "reverted",
+  "replay": "rejected",
+  "payeeTransfer": "executed",
+  "foreignKeyRefused": true,
+  "ok": true,
+  "details": {
+    "approved": {
+      "id": "837ca3882f99902f57a7325f",
+      "cliExit": 0,
+      "cliStdout": "{\"http\":200,\"id\":\"837ca3882f99902f57a7325f\",\"status\":\"executed\",\"account\":\"0x88e0111ab32d99d402e95e4035982982cd424ace\",\"chainId\":31337,\"agentKey\":\"0x70997970C51812dc3A010C7d01b50e0d17dc79C8\",\"userOpHash\":\"0x399617de1097ef47ba84a778b5707112a59ee8eb0c6601005aaa04beda924eb3\",\"approvalHash\":\"0xb6fa054ce0a1c1a1ce523ccd2e2a200f095d0bc788297dfc31258b34d79f607d\",\"nonce\":\"50930204793815341472647614845042490728161331526673935034370110067427831185408\",\"target\":\"0x7ef8E99980Da5bcEDcF7C10f41E55f759F6A174B\",\"selector\":\"0x21603f43\",\"payee\":\"0x0000000000000000000000000000000000000000\",\"maxOutflow\":[{\"asset\":\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\",\"amount\":\"3000000\"}],\"validUntil\":1792871878,\"note\":\"buy 1 ticket (agent text, untrusted)\",\"simulation\":{\"mode\":\"eth_call\",\"ok\":true,\"outflows\":[{\"asset\":\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\",\"amount\":\"3000000\"}],\"declared\":null,\"gasUsed\":\"37693\",\"tracked\":{\"assets\":[\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\"],\"spenders\":[\"0x7ef8E99980Da5bcEDcF7C10f41E55f759F6A174B\"],\"nfts\":[]},\"warnings\":[]},\"txHash\":\"0x71469a40edc1c3a9e93f996e6210e05b2af880ca4ebacd44eee58d7dd459d2b8\",\"success\":true,\"blocked\":false,\"outflows\":[{\"asset\":\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\",\"amount\":\"3000000\"}],\"createdAt\":1792868278,\"updatedAt\":1792868279}",
+      "status": "executed",
+      "txHash": "0x71469a40edc1c3a9e93f996e6210e05b2af880ca4ebacd44eee58d7dd459d2b8",
+      "simulatedOutflow": "3000000",
+      "measuredOutflow": "3000000",
+      "shopReceived": "3000000",
+      "maxOutflow": [
+        {
+          "asset": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "amount": "3000000"
+        }
+      ]
+    },
+    "payeeTransfer": {
+      "create": 201,
+      "payee": "0x00000000000000000000000000000000C0FFEE01",
+      "expectedPayee": "0x00000000000000000000000000000000C0FFEE01",
+      "status": "executed",
+      "payeeBalance": "500000"
+    },
+    "tampered": {
+      "id": "3df8297228ed18f543846ae9",
+      "maxOutflow": [
+        {
+          "asset": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+          "amount": "3000000"
+        }
+      ],
+      "realPrice": "3000001",
+      "status": "reverted",
+      "blocked": true,
+      "success": true,
+      "reason": "PolicyBlocked: error 0x595a64bf",
+      "moved": "0"
+    },
+    "replay": {
+      "resendExecutedOp": {
+        "status": "rejected",
+        "reason": "AA25 invalid account nonce"
+      },
+      "oldApprovalOnNewOp": {
+        "status": "rejected",
+        "reason": "AA24 signature error"
+      },
+      "oldOwnerSigOnNewRequest": {
+        "http": 401,
+        "code": "NOT_OWNER"
+      }
+    },
+    "foreignKey": {
+      "http": 400,
+      "code": "NONCE_KEY_MISMATCH"
+    }
+  }
+}

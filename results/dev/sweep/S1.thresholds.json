@@ -1,0 +1,29 @@
+{
+  "$comment": "X6 detector thresholds (EXPERIMENTS X6). Machine-read by hijack/harness.ts: 'onchain' is written to the account with setFreezeParam, 'watcher' is the WatcherService config. They are FIXED ON DEV SEEDS 1-3 by tools/x6_sweep.ts (rule: the most sensitive sweep setting with 0 false freezes on the dev legit runs; results/dev/x6_threshold_sweep.json) BEFORE the scored seeds 42-61 run, and never tuned on scored seeds. version 0 = the FreezeModule / watcher defaults.",
+  "version": 0,
+  "fixedOnDevSeeds": false,
+  "onchain": {
+    "velocityBps": 5000,
+    "sprayMax": 5,
+    "strikeMax": 3
+  },
+  "watcher": {
+    "spend": {
+      "binSeconds": 300,
+      "k": 4,
+      "h": 0.4
+    },
+    "revert": {
+      "streakMax": 4,
+      "cusumH": 4.2
+    },
+    "approval": {
+      "windowSeconds": 3600,
+      "max": 6
+    }
+  },
+  "loss_asserts": {
+    "perDayLeqGlobalCap": true,
+    "unprovenLeqExploreCap": true
+  }
+}

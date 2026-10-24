@@ -1,0 +1,16 @@
+{
+  "source": "results/forge_m12_invariant.json",
+  "suites": 1,
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "failedTests": [],
+  "required": [
+    "M12InvariantTest::invariant_I14"
+  ],
+  "missingRequired": [],
+  "tests": [
+    "test/unit/M12_Invariant.t.sol:M12InvariantTest::invariant_I14_charge_covers_deposit_cost()"
+  ]
+}

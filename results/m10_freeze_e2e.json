@@ -1,0 +1,100 @@
+{
+  "realAccount": true,
+  "chainId": 31337,
+  "ok": true,
+  "passed": 14,
+  "total": 14,
+  "account": "0x88e0111ab32D99d402e95e4035982982CD424ACE",
+  "metrics": {
+    "sprayLossBaseUnits": "500000",
+    "frozenRefusal": "FailedOp(0, AA24 signature error)",
+    "watcherAlarms": "approval_rate"
+  },
+  "checks": [
+    {
+      "name": "control: in-policy payment to the listed shop executes",
+      "expected": "validated/success",
+      "observed": "validated/success",
+      "pass": true
+    },
+    {
+      "name": "T2: the 6th distinct unproven payee freezes the key on-chain",
+      "expected": "6",
+      "observed": "6",
+      "pass": true
+    },
+    {
+      "name": "the freezing (6th) payment was undone: that payee holds nothing",
+      "expected": "0",
+      "observed": "0",
+      "pass": true
+    },
+    {
+      "name": "isFrozen(agent) is true",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "spray loss <= the exploration cap (1 USDC)",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "a frozen key is refused in validation",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "agent2 starts unfrozen",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "watcher: the 7th approval request in an hour alarms (approval_rate)",
+      "expected": "7",
+      "observed": "7",
+      "pass": true
+    },
+    {
+      "name": "watcher: the alarm sent a freeze tx; isFrozen(agent2) is true",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "the watcher cannot unfreeze",
+      "expected": "refused",
+      "observed": "refused",
+      "pass": true
+    },
+    {
+      "name": "a stranger cannot freeze",
+      "expected": "refused",
+      "observed": "refused",
+      "pass": true
+    },
+    {
+      "name": "owner unfreeze clears agent",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "after the owner unfreezes, the agent key works again",
+      "expected": "validated/success",
+      "observed": "validated/success",
+      "pass": true
+    },
+    {
+      "name": "agent2 stays frozen until its own unfreeze",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    }
+  ],
+  "generatedAt": "2026-10-24T19:03:33.990Z"
+}

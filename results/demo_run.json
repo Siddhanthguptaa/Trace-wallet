@@ -1,0 +1,72 @@
+{
+  "ok": true,
+  "chainMode": "local",
+  "rpcUrl": "http://127.0.0.1:8545",
+  "startedAt": "2026-10-24T13:11:43.600Z",
+  "finishedAt": "2026-10-24T13:11:47.226Z",
+  "beats": [
+    {
+      "beat": "00_x2.ts",
+      "ok": true,
+      "ms": 3269,
+      "summary": "fork @53026000: naive lost 100.000000 USDC with 0 UserOps; one door lost 0.000000 (0xffffffff)",
+      "details": {
+        "local": {
+          "asset": "USDC",
+          "authValue": 100000000,
+          "chainId": 31337,
+          "chainMode": "local",
+          "forkBlock": 0,
+          "fundedVia": "mint",
+          "naive": {
+            "attackReverted": false,
+            "balanceAfter": 0,
+            "balanceBefore": 100000000,
+            "contract": "NaiveAccount",
+            "isValidSignature": "0x1626ba7e",
+            "lostBaseUnits": 100000000
+          },
+          "oneDoor": {
+            "attackReverted": true,
+            "balanceAfter": 100000000,
+            "balanceBefore": 100000000,
+            "contract": "OneDoorSpike",
+            "isValidSignature": "0xffffffff",
+            "lostBaseUnits": 0
+          },
+          "token": "0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f",
+          "tokenVersion": "2",
+          "userOps": 0
+        },
+        "fork": {
+          "asset": "USDC",
+          "authValue": 100000000,
+          "chainId": 8453,
+          "chainMode": "fork",
+          "forkBlock": 53026000,
+          "fundedVia": "deal",
+          "naive": {
+            "attackReverted": false,
+            "balanceAfter": 0,
+            "balanceBefore": 100000000,
+            "contract": "NaiveAccount",
+            "isValidSignature": "0x1626ba7e",
+            "lostBaseUnits": 100000000
+          },
+          "oneDoor": {
+            "attackReverted": true,
+            "balanceAfter": 100000000,
+            "balanceBefore": 100000000,
+            "contract": "OneDoorSpike",
+            "isValidSignature": "0xffffffff",
+            "lostBaseUnits": 0
+          },
+          "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "tokenVersion": "2",
+          "userOps": 0
+        },
+        "forkSkipped": false
+      }
+    }
+  ]
+}

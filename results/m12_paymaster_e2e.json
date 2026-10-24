@@ -1,0 +1,118 @@
+{
+  "realAccount": true,
+  "chainId": 31337,
+  "ok": true,
+  "passed": 14,
+  "total": 14,
+  "accounts": {
+    "A": "0x7499d73A3dd0DF9C7d85abdb7BdC7F5eCD0f5CfE",
+    "B": "0x49579A7B4e90B6238f52FE40ce383493e78d249A",
+    "C": "0x6f84d7C671D375e1e7F84502D19Df7c087c9f9B7"
+  },
+  "paymaster": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+  "quota": {
+    "burstWei": "4440000000000000",
+    "ratePerDayWei": "4440000000000000",
+    "perOpReservedWei": "740000000000000"
+  },
+  "metrics": {
+    "paymasterStaked": true,
+    "sponsoredCharged": "400398000000000",
+    "sponsoredReserved": "740000000000000",
+    "spamAccepted": 11,
+    "spamRefused": 29,
+    "attackerGainWei": "2800791000000000",
+    "paymasterDrainWei": "2800791000000000",
+    "quotaWindowBoundWei": "4440154166666666",
+    "firstRefusal": "FailedOp(0, AA32 paymaster expired or not due)",
+    "wrongPaymasterReason": "FailedOp(0, AA24 signature error)",
+    "gasFieldReason": "FailedOpWithRevert(0, AA33 reverted, GasFieldAboveCap(3,150000,100000))"
+  },
+  "checks": [
+    {
+      "name": "sponsored in-policy op executes",
+      "expected": "validated/success",
+      "observed": "validated/success",
+      "pass": true
+    },
+    {
+      "name": "GasSponsored emitted with 0 < charged <= reserved",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "the account's own EntryPoint deposit is untouched",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "the paymaster deposit paid for the op",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "spam: attacker-as-bundler gain <= burst + rate x elapsed",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "spam: paymaster deposit drain <= the quota window bound",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "spam: ops are refused at validation once the quota is gone",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "spam: the first refusal is the quota (AA32 paymaster not due)",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A's spam leaves B's quota intact: B's sponsored op executes",
+      "expected": "validated/success",
+      "observed": "validated/success",
+      "pass": true
+    },
+    {
+      "name": "an account the owner did not register is refused (NotRegistered)",
+      "expected": "refused:NotRegistered",
+      "observed": "refused:NotRegistered",
+      "pass": true
+    },
+    {
+      "name": "an agent op naming a funded, registering paymaster other than the owner-set one is refused by the account",
+      "expected": "refused",
+      "observed": "refused",
+      "pass": true
+    },
+    {
+      "name": "a gas field above the paymaster cap (preVerificationGas 150k > 100k) is refused",
+      "expected": "refused",
+      "observed": "refused",
+      "pass": true
+    },
+    {
+      "name": "after 24 h the quota has refilled: A is sponsored again",
+      "expected": "validated/success",
+      "observed": "validated/success",
+      "pass": true
+    },
+    {
+      "name": "with the paymaster cleared the op is paid from the account's own deposit",
+      "expected": "validated/success/paid",
+      "observed": "validated/success/paid",
+      "pass": true
+    }
+  ],
+  "generatedAt": "2026-10-24T19:02:51.284Z"
+}

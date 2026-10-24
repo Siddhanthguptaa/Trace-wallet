@@ -1,0 +1,13 @@
+{
+  "asset": "USDC",
+  "beyondPolicyBaseUnits": 25100000,
+  "card": "midnight_double_spend",
+  "chainMode": "local",
+  "config": "R2",
+  "legitBlocked": 3,
+  "legitBlockedValue": 4150000,
+  "legitNeededApproval": 0,
+  "legitProvenBlocked": 2,
+  "lostBaseUnits": 45100000,
+  "success": true
+}

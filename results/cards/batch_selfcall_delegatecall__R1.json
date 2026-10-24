@@ -1,0 +1,13 @@
+{
+  "asset": "USDC",
+  "beyondPolicyBaseUnits": 50000000,
+  "card": "batch_selfcall_delegatecall",
+  "chainMode": "local",
+  "config": "R1",
+  "legitBlocked": 0,
+  "legitBlockedValue": 0,
+  "legitNeededApproval": 0,
+  "legitProvenBlocked": 0,
+  "lostBaseUnits": 50000000,
+  "success": true
+}

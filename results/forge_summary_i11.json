@@ -1,0 +1,20 @@
+{
+  "source": "results/forge_i11.json",
+  "suites": 3,
+  "total": 3,
+  "passed": 3,
+  "failed": 0,
+  "skipped": 0,
+  "failedTests": [],
+  "required": [
+    "invariant_I11_fundsMoveOnlyWithAuthority",
+    "invariant_I11_agentMovesStayInPolicy",
+    "invariant_I11_ownerChangesOnlyByRecovery"
+  ],
+  "missingRequired": [],
+  "tests": [
+    "test/invariant/I11_Authorization.t.sol:I11AgentInPolicyTest::invariant_I11_agentMovesStayInPolicy()",
+    "test/invariant/I11_Authorization.t.sol:I11NoUnauthorizedMoveTest::invariant_I11_fundsMoveOnlyWithAuthority()",
+    "test/invariant/I11_Authorization.t.sol:I11OwnerOnlyViaRecoveryTest::invariant_I11_ownerChangesOnlyByRecovery()"
+  ]
+}

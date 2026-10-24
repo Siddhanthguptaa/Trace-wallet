@@ -1,0 +1,16 @@
+{
+  "agentCap24hWei": 10000000000000000,
+  "agents": 3,
+  "burstWei": 5000000000000000,
+  "depositDrainedWei": 51252966000000000,
+  "elapsedSec": 259200,
+  "lane": "PM",
+  "minChargeMarginWei": 50641000000000,
+  "ratePerDayWei": 5000000000000000,
+  "sponsoredOps": 126,
+  "sumOfQuotasBoundWei": 60000000000000000,
+  "sybilAttempts": 72,
+  "sybilSponsored": 0,
+  "test": "M12PaymasterTest::test_depositDrain_bounded_by_sum_of_quotas",
+  "worstAgent24hWindowWei": 8544126000000000
+}

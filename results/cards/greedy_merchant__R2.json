@@ -1,0 +1,13 @@
+{
+  "asset": "USDC",
+  "beyondPolicyBaseUnits": 18000000,
+  "card": "greedy_merchant",
+  "chainMode": "local",
+  "config": "R2",
+  "legitBlocked": 3,
+  "legitBlockedValue": 4150000,
+  "legitNeededApproval": 0,
+  "legitProvenBlocked": 2,
+  "lostBaseUnits": 20000000,
+  "success": true
+}

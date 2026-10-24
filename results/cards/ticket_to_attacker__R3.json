@@ -1,0 +1,13 @@
+{
+  "asset": "USDC",
+  "beyondPolicyBaseUnits": 0,
+  "card": "ticket_to_attacker",
+  "chainMode": "local",
+  "config": "R3",
+  "legitBlocked": 0,
+  "legitBlockedValue": 0,
+  "legitNeededApproval": 3,
+  "legitProvenBlocked": 0,
+  "lostBaseUnits": 0,
+  "success": false
+}

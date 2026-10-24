@@ -179,6 +179,8 @@ def check_unmarked(path: Path, text: str, errors: list[str]) -> int:
             if raw.lstrip().startswith("<!--"):
                 continue
             ln = strip_ignorable(raw)
+            # digits inside a marker (the divisor, ci95) are not displayed numbers: blank them, keep the "[r:" prefix
+            ln = MARKER.sub(lambda m: "[r:" + "x" * (len(m.group(0)) - 4) + "]", ln)
             for phrase in ALLOWED_UNMARKED:
                 ln = ln.replace(phrase, " " * len(phrase))
             ln = re.sub(r"^\s*\d+\.\s", "   ", ln)  # ordered-list number

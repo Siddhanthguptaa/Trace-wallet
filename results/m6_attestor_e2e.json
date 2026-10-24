@@ -1,0 +1,57 @@
+{
+  "target": "AgentAccount (contracts/out, libraries linked) + EntryPoint v0.8",
+  "realAccount": true,
+  "chainMode": "local",
+  "chainId": 31337,
+  "attestor": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+  "wallet": "0x88e0111ab32D99d402e95e4035982982CD424ACE",
+  "provenAccepted": true,
+  "flaggedOnChain": true,
+  "coldStartUnproven": true,
+  "agentOnlyIgnored": true,
+  "ok": true,
+  "details": {
+    "coldStart": {
+      "status": 404,
+      "body": {
+        "error": "no_attestation",
+        "tier": "UNPROVEN",
+        "code": null,
+        "reason": "cold_start"
+      }
+    },
+    "agentOnly": {
+      "statuses": [
+        202,
+        202,
+        202,
+        202,
+        202
+      ],
+      "attestAfter": 404
+    },
+    "attestAfter2": 404,
+    "proven": {
+      "x402Statuses": [
+        200,
+        200,
+        200
+      ],
+      "attest": 200,
+      "tier": "PROVEN",
+      "validUntil": 1792954650,
+      "epoch": "1",
+      "onChainCheck": true
+    },
+    "sybil": {
+      "attest": 404,
+      "tier": "FLAGGED",
+      "code": "QUARANTINE",
+      "sybilRisk": 1,
+      "flagTx": "0x9adbece4b1bb29489ded4378cc029801ca22feb6b726cc02665bce496a48c286",
+      "flaggedOnChain": true
+    }
+  },
+  "note": "against the real AgentAccount",
+  "generatedAt": "2026-10-24T18:57:31.361Z"
+}

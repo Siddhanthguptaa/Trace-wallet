@@ -1,0 +1,168 @@
+{
+  "realAccount": true,
+  "ok": true,
+  "delaySeconds": 172800,
+  "guardians": 5,
+  "threshold": 3,
+  "passed": 26,
+  "total": 26,
+  "checks": [
+    {
+      "name": "A. 5 guardians, threshold 3",
+      "expected": "5/3",
+      "observed": "5/3",
+      "pass": true
+    },
+    {
+      "name": "A. guardian proposes the new owner",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A. second guardian approves",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A. execute with 2 of 5 fails",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "A. third guardian approves",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A. execute with quorum but inside the 48 h delay fails",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "A. execute 1 h before the delay ends fails",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "A. execute after 48 h succeeds (anyone may call)",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A. the owner is now the recovered owner",
+      "expected": "0x14dc79964da2c08b23698b3d3cc7ca32193d9955",
+      "observed": "0x14dc79964da2c08b23698b3d3cc7ca32193d9955",
+      "pass": true
+    },
+    {
+      "name": "A. every agent session was revoked by recovery",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A. attestation epoch bumped (old attestations die)",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A. recovery moved no funds",
+      "expected": "50000000",
+      "observed": "50000000",
+      "pass": true
+    },
+    {
+      "name": "A. the old agent key is refused after recovery",
+      "expected": "rejected",
+      "observed": "rejected",
+      "pass": true
+    },
+    {
+      "name": "A. the old owner is locked out",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "A. the new owner can act",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A. executing the same proposal again fails (no replay)",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "B. a non-owner cannot veto",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "B. the owner vetoes inside the 48 h window",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "B. execute after the delay fails (vetoed)",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "B. the owner is unchanged",
+      "expected": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "observed": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "pass": true
+    },
+    {
+      "name": "B. the agent session is untouched",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "C. the leaked agent key cannot propose",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "C. a non-guardian cannot propose",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "C. the proposer cannot approve twice",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "C. 2 of 5 never executes, even a week later",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "C. the owner is unchanged",
+      "expected": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "observed": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "pass": true
+    }
+  ],
+  "generatedAt": "2026-10-24T19:06:43.743Z"
+}

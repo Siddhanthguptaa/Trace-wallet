@@ -1,0 +1,163 @@
+{
+  "meta": {
+    "delaySeconds": 172800,
+    "guardians": 5,
+    "threshold": 3,
+    "generatedAt": "2026-10-24T18:34:33.363Z"
+  },
+  "ok": true,
+  "passed": 25,
+  "total": 25,
+  "checks": [
+    {
+      "name": "A.guardians configured 5 / threshold 3",
+      "expected": "5/3",
+      "observed": "5/3",
+      "pass": true
+    },
+    {
+      "name": "A.guardian proposes",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A.second approval",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A.execute with 2 of 5 fails",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "A.third approval",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A.execute with quorum but inside the 48 h delay fails",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "A.execute 1 h before the delay ends fails",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "A.execute after 48 h succeeds (anyone may call)",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A.owner is the new owner",
+      "expected": "0x14dc79964da2c08b23698b3d3cc7ca32193d9955",
+      "observed": "0x14dc79964da2c08b23698b3d3cc7ca32193d9955",
+      "pass": true
+    },
+    {
+      "name": "A.agent key revoked by recovery",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A.attestation epoch bumped",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A.funds did not move",
+      "expected": "100000000",
+      "observed": "100000000",
+      "pass": true
+    },
+    {
+      "name": "A.old owner is locked out (setGlobalCap reverts)",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "A.new owner can act (setGlobalCap)",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "A.replay: executing the same proposal again fails",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "B.owner vetoes inside the window",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "B.execute after the delay fails (vetoed)",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "B.owner unchanged",
+      "expected": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "observed": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "pass": true
+    },
+    {
+      "name": "B.agent key untouched",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "B.non-owner cannot veto",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "C.leaked agent key cannot propose",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "C.non-guardian cannot propose",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "C.same guardian cannot approve twice",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "C.2 of 5 never executes, even a week later",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "C.owner unchanged",
+      "expected": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "observed": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+      "pass": true
+    }
+  ]
+}

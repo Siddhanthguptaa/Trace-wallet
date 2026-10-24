@@ -1,0 +1,13 @@
+{
+  "asset": "USDC",
+  "beyondPolicyBaseUnits": 6000000,
+  "card": "sybil_payee",
+  "chainMode": "local",
+  "config": "R1",
+  "legitBlocked": 0,
+  "legitBlockedValue": 0,
+  "legitNeededApproval": 0,
+  "legitProvenBlocked": 0,
+  "lostBaseUnits": 7000000,
+  "success": true
+}

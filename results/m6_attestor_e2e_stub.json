@@ -1,0 +1,57 @@
+{
+  "target": "AttestorStub (services/attestor/test/anvil, digest from contracts/src/lib/TypedData.sol)",
+  "realAccount": false,
+  "chainMode": "local",
+  "chainId": 31337,
+  "attestor": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+  "wallet": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "provenAccepted": true,
+  "flaggedOnChain": true,
+  "coldStartUnproven": true,
+  "agentOnlyIgnored": true,
+  "ok": true,
+  "details": {
+    "coldStart": {
+      "status": 404,
+      "body": {
+        "error": "no_attestation",
+        "tier": "UNPROVEN",
+        "code": null,
+        "reason": "cold_start"
+      }
+    },
+    "agentOnly": {
+      "statuses": [
+        202,
+        202,
+        202,
+        202,
+        202
+      ],
+      "attestAfter": 404
+    },
+    "attestAfter2": 404,
+    "proven": {
+      "x402Statuses": [
+        200,
+        200,
+        200
+      ],
+      "attest": 200,
+      "tier": "PROVEN",
+      "validUntil": 1792935907,
+      "epoch": "1",
+      "onChainCheck": true
+    },
+    "sybil": {
+      "attest": 404,
+      "tier": "FLAGGED",
+      "code": "QUARANTINE",
+      "sybilRisk": 1,
+      "flagTx": "0xdcf7acc6c6de26089e748b6002b82f1cffc998dee783716f6c515f4125230d93",
+      "flaggedOnChain": true
+    }
+  },
+  "note": "against the TypedData.sol stub; INT re-runs with E2E_TARGET_MODULE for the real AgentAccount",
+  "generatedAt": "2026-10-24T13:45:08.478Z"
+}

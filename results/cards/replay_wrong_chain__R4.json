@@ -1,0 +1,13 @@
+{
+  "asset": "USDC",
+  "beyondPolicyBaseUnits": 0,
+  "card": "replay_wrong_chain",
+  "chainMode": "local",
+  "config": "R4",
+  "legitBlocked": 0,
+  "legitBlockedValue": 0,
+  "legitNeededApproval": 0,
+  "legitProvenBlocked": 0,
+  "lostBaseUnits": 0,
+  "success": false
+}
