@@ -1,0 +1,481 @@
+/* ---------- Panels ----------
+   A panel is a sheet of near-white paper on the silver ground: hairline edge, near-square corner,
+   a long soft shadow. The sheet level is frosted, for content that floats over the 3D stage. */
+.panel,
+.sheet {
+  position: relative;
+  border: 1px solid var(--rule);
+  border-radius: var(--r);
+}
+.panel {
+  background: var(--panel);
+}
+.sheet {
+  background: var(--panel-glass);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow: var(--shadow);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .sheet {
+    background: var(--panel);
+  }
+}
+.pad {
+  padding: clamp(var(--s-5), 2.4vw, var(--s-8));
+}
+@media (max-width: 640px) {
+  .pad {
+    padding: var(--s-4);
+  }
+}
+
+/* ---------- Buttons ----------
+   Ink is the default action, aubergine on hover. Marigold is kept for the one decision on a page. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 42px;
+  padding: 0 var(--s-5);
+  border-radius: var(--r);
+  border: 1px solid transparent;
+  font-size: var(--fs-14);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 150ms var(--ease-out),
+    border-color 150ms var(--ease-out),
+    color 150ms var(--ease-out);
+}
+.btn:disabled {
+  opacity: 0.5;
+}
+.primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--ground-hi);
+}
+.primary:hover:not(:disabled) {
+  background: var(--aub);
+  border-color: var(--aub);
+  color: var(--ground-hi);
+}
+.decide {
+  background: var(--mari);
+  border-color: var(--mari);
+  color: var(--mari-ink);
+  font-weight: 700;
+}
+.decide:hover:not(:disabled) {
+  background: var(--mari-soft);
+  border-color: var(--mari-soft);
+  color: var(--mari-ink);
+}
+.secondary {
+  background: transparent;
+  border-color: var(--rule-strong);
+  color: var(--ink);
+}
+.secondary:hover:not(:disabled) {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--ground-hi);
+}
+.ghost {
+  background: transparent;
+  color: var(--ink-dim);
+  padding: 0 var(--s-3);
+}
+.ghost:hover:not(:disabled) {
+  color: var(--aub);
+  background: var(--aub-bg);
+}
+.small {
+  min-height: 32px;
+  padding: 0 var(--s-3);
+  font-size: var(--fs-13);
+}
+.block {
+  width: 100%;
+}
+.iconBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r);
+  border: 0;
+  background: transparent;
+  color: var(--ink-faint);
+  transition:
+    color 140ms var(--ease-out),
+    background-color 140ms var(--ease-out);
+}
+.iconBtn:hover {
+  color: var(--aub);
+  background: var(--aub-bg);
+}
+
+/* Hold to confirm: the fill is the commitment, so it is marigold. */
+.hold {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.holdFill {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--mari);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+.holding .holdFill {
+  transform: scaleX(1);
+  transition: transform 1200ms linear;
+}
+.holding,
+.holding:hover:not(:disabled) {
+  color: var(--mari-ink);
+  background: var(--ground-hi);
+}
+
+/* ---------- Hex / Amount ---------- */
+.hex {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.hex a {
+  text-decoration: none;
+}
+.hexText {
+  font-variant-numeric: tabular-nums;
+}
+.copied {
+  color: var(--aub);
+}
+.amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.amountUnit {
+  color: var(--ink-faint);
+  font-weight: 400;
+  margin-left: 0.3em;
+  font-size: 0.72em;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+.out {
+  color: var(--ink);
+}
+
+/* ---------- Pills (Certus) ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: var(--ground-deep);
+  color: var(--ink-dim);
+}
+.badge svg {
+  flex: none;
+}
+.badgeProven {
+  background: var(--aub-bg);
+  color: var(--aub);
+}
+.badgeUnproven {
+  background: var(--mari-bg);
+  color: var(--mari-deep);
+}
+.badgeFlagged {
+  background: var(--loss-bg);
+  color: var(--loss);
+}
+.badgeNeutral {
+  color: var(--ink-faint);
+}
+.reason {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.reasonCode {
+  font-family: var(--font-mono);
+  font-size: var(--fs-12);
+  letter-spacing: 0.04em;
+  color: var(--aub);
+}
+.reasonSentence {
+  font-size: var(--fs-13);
+  color: var(--ink-dim);
+}
+
+/* ---------- Gauge ---------- */
+.gauge {
+  display: grid;
+  gap: var(--s-2);
+}
+.gaugeHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-3);
+  font-size: var(--fs-13);
+  color: var(--ink-dim);
+}
+.gaugeTitle {
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.track {
+  position: relative;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--ground-deep);
+  overflow: hidden;
+}
+.fill {
+  position: absolute;
+  inset: 0;
+  background: var(--aub);
+  transform-origin: 0 50%;
+  transition: transform var(--t-gauge) var(--ease-out);
+}
+.fillExplore {
+  background: var(--mari);
+}
+.fillLow {
+  background: var(--loss);
+}
+.gaugeFoot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--fs-12);
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- States ---------- */
+.state {
+  display: grid;
+  gap: var(--s-3);
+  justify-items: start;
+  padding: var(--s-6);
+  color: var(--ink-dim);
+  font-size: var(--fs-14);
+  max-width: 62ch;
+}
+.stateTitle {
+  color: var(--ink);
+  font-size: var(--fs-16);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.stateDetail {
+  font-family: var(--font-mono);
+  font-size: var(--fs-12);
+  color: var(--ink-faint);
+  word-break: break-word;
+  border-left: 2px solid var(--rule-strong);
+  padding-left: var(--s-3);
+}
+.skeleton {
+  display: grid;
+  gap: var(--s-3);
+  padding: var(--s-6);
+}
+.skLine {
+  height: 10px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, var(--ground), var(--ground-deep), var(--ground));
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.age {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.ageDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--aub-bright);
+  box-shadow: 0 0 0 3px var(--aub-bg);
+}
+.stale .ageDot {
+  background: var(--mari);
+  box-shadow: 0 0 0 3px var(--mari-bg);
+}
+.stale {
+  color: var(--mari-deep);
+}
+
+/* ---------- Fields ---------- */
+.field {
+  display: grid;
+  gap: 6px;
+}
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.hint {
+  font-size: var(--fs-12);
+  color: var(--ink-faint);
+}
+.input {
+  height: 42px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r);
+  border: 1px solid var(--rule-strong);
+  background: var(--panel);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  transition: border-color 140ms var(--ease-out);
+  width: 100%;
+}
+.input:hover {
+  border-color: var(--ink-faint);
+}
+.input:focus-visible {
+  outline: 2px solid var(--mari);
+  outline-offset: 1px;
+  border-color: var(--ink-faint);
+}
+.input[aria-invalid='true'] {
+  border-color: var(--loss);
+}
+.inputMono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-14);
+}
+.error {
+  font-size: var(--fs-12);
+  color: var(--loss);
+}
+
+/* ---------- Segmented ---------- */
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--panel);
+}
+.seg button {
+  border: 0;
+  border-right: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink-dim);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  padding: 0 12px;
+  min-height: 32px;
+}
+.seg button:last-child {
+  border-right: 0;
+}
+.seg button:hover {
+  color: var(--aub);
+}
+.seg button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--ground-hi);
+}
+
+/* ---------- Tx progress ---------- */
+.progress {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--s-2);
+}
+.step {
+  display: grid;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.stepBar {
+  height: 3px;
+  background: var(--ground-deep);
+}
+.stepDone .stepBar {
+  background: var(--aub);
+}
+.stepDone {
+  color: var(--ink);
+}
+.stepNow .stepBar {
+  background: var(--mari);
+}
+.stepNow {
+  color: var(--mari-deep);
+}
+.stepFail .stepBar {
+  background: var(--loss);
+}
+.stepFail {
+  color: var(--loss);
+}
+
+/* ---------- Kbd ---------- */
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--r);
+  border: 1px solid var(--rule-strong);
+  border-bottom-width: 2px;
+  background: var(--panel);
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  color: var(--ink-dim);
+}

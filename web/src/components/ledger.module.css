@@ -1,0 +1,255 @@
+.wrap {
+  container-type: inline-size;
+}
+.table {
+  width: 100%;
+  font-size: var(--fs-14);
+}
+.table thead th {
+  text-align: left;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  padding: var(--s-4) var(--s-3) var(--s-3);
+  border-bottom: 1px solid var(--rule-strong);
+  vertical-align: bottom;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
+}
+.cfgId {
+  display: block;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: var(--fs-16);
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+.cfgLabel {
+  display: block;
+  margin-top: 2px;
+}
+.table tbody th,
+.table tbody td {
+  padding: 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: middle;
+}
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.cardCol {
+  text-align: left;
+  width: 30%;
+  padding-left: var(--s-2);
+}
+.table thead .cardCol {
+  padding-left: var(--s-5);
+}
+.rowBtn,
+.cellBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 52px;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  background: transparent;
+  text-align: left;
+  border-radius: 0;
+  transition: background-color 140ms var(--ease-out);
+}
+.rowBtn {
+  padding-left: var(--s-3);
+}
+.rowBtn:hover,
+.cellBtn:hover {
+  background: var(--ground-hi);
+}
+.cellBtn[aria-expanded='true'],
+.rowBtn[aria-expanded='true'] {
+  background: var(--aub-bg);
+}
+.cellStatic {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: var(--s-2) var(--s-3);
+}
+.cardTitle {
+  font-weight: 700;
+  color: var(--ink);
+  font-size: var(--fs-14);
+}
+.guard {
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.rowOpen th,
+.rowOpen td {
+  border-bottom-color: transparent !important;
+}
+.cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.lost {
+  color: var(--loss);
+}
+.refused {
+  color: var(--aub);
+}
+.refused svg {
+  color: var(--aub-bright);
+}
+.bounded {
+  color: var(--mari-deep);
+  padding: 2px 8px;
+  margin-left: -8px;
+  background: var(--mari-bg);
+  border-radius: 999px;
+}
+.na {
+  color: var(--ink-faint);
+}
+.pending {
+  color: var(--ink-faint);
+  font-weight: 400;
+  font-style: normal;
+  padding: 1px 8px;
+  margin-left: -8px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: 999px;
+  font-size: var(--fs-13);
+}
+.runs {
+  font-size: var(--fs-12);
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.metricRow th,
+.metricRow td {
+  border-top: 1px solid var(--rule-strong);
+  background: var(--ground-hi);
+}
+.metricRow .cardCol {
+  padding: var(--s-3) var(--s-3) var(--s-3) calc(var(--s-2) + var(--s-3));
+}
+.metricRow .cardCol .cardTitle,
+.metricRow .cardCol .guard {
+  display: block;
+}
+
+/* Expanded detail */
+.detailRow td {
+  padding: 0 var(--s-3) var(--s-4) !important;
+}
+.receipt,
+.story {
+  margin: 0 var(--s-2);
+  padding: var(--s-4) var(--s-5);
+  border-radius: var(--r);
+  background: var(--ground-hi);
+  border: 1px solid var(--rule);
+  animation: open 200ms var(--ease-out);
+}
+@keyframes open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.receipt dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s-4) var(--s-6);
+}
+.receipt dt,
+.story h4 {
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.receipt dd {
+  margin: 0;
+  font-size: var(--fs-14);
+}
+.story {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-6);
+}
+.story p {
+  font-size: var(--fs-14);
+  color: var(--ink-dim);
+}
+.muted {
+  color: var(--ink-faint);
+}
+
+/* Phone stack */
+.stack {
+  display: none;
+}
+@container (max-width: 700px) {
+  .table {
+    display: none;
+  }
+  .stack {
+    display: grid;
+    gap: 0;
+  }
+  .stackItem {
+    padding: var(--s-4);
+    border-bottom: 1px solid var(--rule);
+  }
+  .stackItem:last-child {
+    border-bottom: 0;
+  }
+  .stackHead {
+    display: grid;
+    gap: 2px;
+    margin-bottom: var(--s-3);
+  }
+  .stackGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-3);
+  }
+  .stackGrid dt {
+    font-family: var(--font-mono);
+    font-size: var(--fs-11);
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+    margin-bottom: 2px;
+  }
+  .stackGrid dd {
+    margin: 0;
+    display: grid;
+    gap: 2px;
+    justify-items: start;
+    font-size: var(--fs-13);
+  }
+  .story {
+    grid-template-columns: 1fr;
+  }
+}

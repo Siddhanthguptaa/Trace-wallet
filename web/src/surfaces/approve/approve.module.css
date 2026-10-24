@@ -1,0 +1,252 @@
+.page {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+.top {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: min(520px, 100%);
+  margin: 0 auto;
+  padding: var(--s-5) var(--s-4) var(--s-3);
+}
+.mark {
+  color: var(--text-1);
+  display: inline-flex;
+}
+.topTitle {
+  font-weight: 700;
+  font-size: var(--fs-14);
+  color: var(--text-2);
+}
+.main {
+  width: min(520px, 100%);
+  margin: 0 auto;
+  padding: 0 var(--s-4) var(--s-12);
+}
+.card {
+  display: grid;
+  gap: var(--s-3);
+}
+.sheet {
+  padding: var(--s-6);
+  display: grid;
+  gap: var(--s-5);
+}
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  font-size: var(--fs-13);
+  color: var(--text-2);
+}
+.wallet,
+.expiry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.amount {
+  font-size: clamp(2.6rem, 11vw, var(--fs-64));
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  margin-top: var(--s-2);
+}
+.payee {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-3);
+  font-size: var(--fs-16);
+  margin-top: calc(-1 * var(--s-2));
+}
+.to {
+  color: var(--text-3);
+}
+.block h2,
+.signing summary {
+  font-size: var(--fs-13);
+  font-weight: 700;
+  color: var(--text-2);
+  margin-bottom: var(--s-3);
+}
+.facts {
+  display: grid;
+  gap: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--rule);
+}
+.facts dt,
+.typed dt {
+  font-size: var(--fs-12);
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+.facts dd,
+.typed dd {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+}
+.call {
+  font-family: var(--font-mono);
+  font-size: var(--fs-13);
+  color: var(--text-1);
+  word-break: break-word;
+}
+.argName {
+  color: var(--text-3);
+}
+.deltas {
+  display: grid;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.neg {
+  color: var(--loss);
+  font-weight: 700;
+}
+.pos {
+  color: var(--ink);
+  font-weight: 700;
+}
+.dim {
+  color: var(--text-3);
+}
+.note {
+  border-radius: 12px;
+  border: 1px dashed var(--rule-strong);
+  background: var(--ground-hi);
+}
+.noteToggle {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: transparent;
+  border: 0;
+  font-size: var(--fs-13);
+  color: var(--text-2);
+  text-align: left;
+  min-height: 44px;
+}
+.noteToggle strong {
+  font-weight: 500;
+  color: var(--text-2);
+}
+.untrusted {
+  margin-left: var(--s-2);
+  font-size: var(--fs-12);
+  color: var(--mari-deep);
+}
+.rot {
+  transform: rotate(180deg);
+}
+.noteText {
+  padding: 0 var(--s-4) var(--s-4);
+  display: grid;
+  gap: var(--s-2);
+  font-size: var(--fs-14);
+  color: var(--text-3);
+}
+.noteText s {
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--rule-strong);
+}
+.noteWhy {
+  font-size: var(--fs-12);
+}
+.signing summary {
+  cursor: pointer;
+  list-style: none;
+  margin-bottom: 0;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.signing summary::-webkit-details-marker {
+  display: none;
+}
+.signing summary::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 160ms var(--ease-out);
+  margin-right: 4px;
+}
+.signing[open] summary::before {
+  transform: rotate(45deg);
+}
+.signing summary .dim {
+  font-weight: 400;
+}
+.typed {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-3) var(--s-4);
+  margin-top: var(--s-3);
+  padding: var(--s-4);
+  border-radius: 12px;
+  background: var(--ground-hi);
+  font-size: var(--fs-13);
+}
+.hash {
+  font-size: var(--fs-12);
+}
+.actions {
+  padding-top: var(--s-2);
+}
+.buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-3);
+}
+.buttons button {
+  min-height: 52px;
+  font-size: var(--fs-16);
+}
+.fine {
+  margin-top: var(--s-3);
+  font-size: var(--fs-12);
+  color: var(--text-3);
+}
+.blocker {
+  margin-bottom: var(--s-3);
+  font-size: var(--fs-13);
+  color: var(--mari-deep);
+}
+.result {
+  display: grid;
+  gap: var(--s-3);
+}
+.resultLine {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--fs-14);
+  color: var(--text-1);
+}
+.rate {
+  font-size: var(--fs-13);
+  color: var(--mari-deep);
+  padding: 0 var(--s-2);
+}
+@media (max-width: 420px) {
+  .sheet {
+    padding: var(--s-5) var(--s-4);
+  }
+  .typed {
+    grid-template-columns: 1fr;
+  }
+}

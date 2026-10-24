@@ -1,0 +1,96 @@
+.lane {
+  --at: 58cqw;
+  container-type: inline-size;
+  position: relative;
+  height: 56px;
+  border-radius: var(--r);
+  background: var(--ground-hi);
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+.threshold {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: var(--at);
+  width: 2px;
+  border-radius: 1px;
+  background: var(--rule-strong);
+  transition:
+    background-color var(--t-stop) var(--ease-out),
+    box-shadow var(--t-stop) var(--ease-out);
+}
+.token {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: calc(var(--at) - 20px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--panel);
+  border: 1px solid var(--rule-strong);
+  color: var(--ink);
+  transform: translate(10px, -50%);
+  transition:
+    transform var(--t-door) var(--ease-out),
+    opacity var(--t-door) var(--ease-out);
+}
+.verdict {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: var(--fs-13);
+  opacity: 0;
+  transition: opacity 160ms var(--ease-out) 140ms;
+  text-align: right;
+  max-width: calc(100cqw - var(--at) - 24px);
+}
+.lane[data-phase='idle'] .token {
+  color: var(--text-3);
+}
+.lane[data-phase='travel'] .token {
+  transform: translate(calc(var(--at) - 100% - 10px), -50%);
+}
+.lane[data-phase='stop'] .token {
+  transform: translate(calc(var(--at) - 100% - 10px), -50%);
+  border-color: var(--aub);
+  color: var(--aub);
+}
+.lane[data-phase='stop'] .threshold {
+  background: var(--mari);
+  box-shadow: 0 0 0 3px var(--mari-bg);
+}
+.lane[data-phase='pass'] .token {
+  transform: translate(calc(var(--at) + 14px), -50%);
+  opacity: 0.55;
+}
+.lane[data-phase='stop'] .verdict,
+.lane[data-phase='pass'] .verdict {
+  opacity: 1;
+}
+.lane[data-phase='stop'] .verdict {
+  left: calc(var(--at) + 14px);
+  right: auto;
+  text-align: left;
+}
+/* On pass the token moves beyond the threshold, so the verdict takes the near side. */
+.lane[data-phase='pass'] .verdict {
+  left: 12px;
+  right: auto;
+  text-align: left;
+  max-width: calc(var(--at) - 24px);
+}
+
+.lane[data-phase='idle'] .token {
+  color: var(--ink-faint);
+}

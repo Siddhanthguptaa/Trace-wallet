@@ -1,0 +1,99 @@
+/* Design tokens. Silver is the ground; deep aubergine and marigold are the only accents.
+   Visual language after Certus: paper and ink, hairline rules, near-square corners, mono labels.
+   Light theme only, committed: a wallet you have to trust should read like a printed statement. */
+:root {
+  color-scheme: light;
+
+  /* Silver ground */
+  --ground-hi: oklch(0.975 0.003 300);
+  --ground: oklch(0.93 0.005 300);
+  --ground-deep: oklch(0.885 0.008 300);
+  --panel: oklch(0.992 0.002 300);
+  --panel-glass: oklch(0.992 0.002 300 / 0.74);
+
+  /* Ink, tinted toward aubergine */
+  --ink: oklch(0.2 0.035 330);
+  --ink-dim: oklch(0.42 0.03 330);
+  --ink-faint: oklch(0.5 0.022 320);
+
+  --rule: oklch(0.86 0.008 300);
+  --rule-strong: oklch(0.72 0.014 310);
+
+  /* Aubergine: structure, the wallet holding, primary actions */
+  --aub: oklch(0.34 0.095 330);
+  --aub-deep: oklch(0.26 0.08 330);
+  --aub-bright: oklch(0.47 0.12 330);
+  --aub-bg: oklch(0.94 0.022 330);
+
+  /* Marigold: bounds, decisions, focus */
+  --mari: oklch(0.79 0.16 75);
+  --mari-soft: oklch(0.86 0.12 82);
+  --mari-deep: oklch(0.5 0.12 60);
+  --mari-bg: oklch(0.955 0.045 85);
+  --mari-ink: oklch(0.24 0.05 60);
+
+  /* Funds that left */
+  --loss: oklch(0.5 0.17 27);
+  --loss-bg: oklch(0.95 0.03 27);
+
+  /* Aliases kept for inline styles */
+  --text-1: var(--ink);
+  --text-2: var(--ink-dim);
+  --text-3: var(--ink-faint);
+  --marigold-500: var(--mari);
+
+  /* Type: Helvetica pinned by the brief; mono for labels, hex and figures in grids */
+  /* Inter Tight stands in where Helvetica Neue is missing (Windows), so thin display weights hold. */
+  --font-sans: 'Helvetica Neue', 'Inter Tight', Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --fs-11: 0.6875rem;
+  --fs-12: 0.75rem;
+  --fs-13: 0.8125rem;
+  --fs-14: 0.875rem;
+  --fs-16: 1rem;
+  --fs-20: 1.25rem;
+  --fs-28: 1.75rem;
+  --fs-40: 2.5rem;
+  --fs-64: 4rem;
+
+  /* Space (4px base) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+  --s-24: 96px;
+  --s-32: 128px;
+
+  --r: 2px;
+  --r-pane: 3px;
+
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --t-door: 200ms;
+  --t-stop: 120ms;
+  --t-gauge: 600ms;
+
+  --shadow: 0 1px 2px oklch(0.2 0.035 330 / 0.06), 0 12px 32px -12px oklch(0.2 0.035 330 / 0.26);
+  --shadow-lift: 0 1px 0 oklch(1 0 0 / 0.7) inset, 0 14px 34px -16px oklch(0.2 0.035 330 / 0.45);
+
+  --content-max: 1200px;
+}
+
+/* Projector mode: halls wash out pale greys, so firm up the rules and dim text, and scale up. */
+:root[data-projector='on'] {
+  --ink-dim: oklch(0.36 0.03 330);
+  --ink-faint: oklch(0.44 0.025 320);
+  --rule: oklch(0.8 0.01 300);
+  font-size: 112.5%;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --panel-glass: var(--panel);
+  }
+}
