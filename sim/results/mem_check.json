@@ -1,0 +1,92 @@
+{
+  "pass": true,
+  "explainedMismatches": {
+    "policy": "REPUTATION",
+    "count": 4,
+    "reason": "jitter RNG stream shared with Prisma cuid() generation (2 Math.random draws per insert); memory backend: jitter-only stream"
+  },
+  "deterministicUnitsCompared": 48,
+  "deterministicUnitsIdentical": 48,
+  "unitsCompared": 52,
+  "unitsIdentical": 48,
+  "attacksCovered": [
+    "strategic-default",
+    "collusion-ring",
+    "sybil-cluster",
+    "game-theoretic"
+  ],
+  "policiesCovered": [
+    "EB(0)",
+    "EB(1)",
+    "EB(2)",
+    "EB(5)",
+    "EB(10)",
+    "TRACE-no-bandit",
+    "TRACE-full",
+    "EIGENTRUST",
+    "REPUTATION"
+  ],
+  "reproCellsCompared": 10,
+  "reproCellsIdentical": 10,
+  "unitMismatches": [
+    {
+      "cellId": "x4|partitioned|REPUTATION|strategic-default|s42|b0",
+      "prisma": "ba46a30a718f7f83",
+      "memory": "ceffd8e5dc8fd834",
+      "fraud": [
+        0,
+        5
+      ],
+      "served": [
+        30,
+        28
+      ]
+    },
+    {
+      "cellId": "x4|partitioned|REPUTATION|collusion-ring|s42|b0",
+      "prisma": "79eeb52324c405a8",
+      "memory": "6e734f916fc51589",
+      "fraud": [
+        8,
+        5
+      ],
+      "served": [
+        28,
+        27
+      ]
+    },
+    {
+      "cellId": "x4|partitioned|REPUTATION|sybil-cluster|s42|b0",
+      "prisma": "867d4a96186d972b",
+      "memory": "279114b36f0f7324",
+      "fraud": [
+        1,
+        4
+      ],
+      "served": [
+        26,
+        31
+      ]
+    },
+    {
+      "cellId": "x4|partitioned|REPUTATION|game-theoretic|s42|b0",
+      "prisma": "29fd009897261663",
+      "memory": "5d8337edaa1db15f",
+      "fraud": [
+        18,
+        12
+      ],
+      "served": [
+        32,
+        34
+      ]
+    }
+  ],
+  "reproMismatches": [],
+  "meanSecondsPerSessionUnit": {
+    "prisma": 27.911,
+    "memory": 3.004
+  },
+  "rule": "identical job-sequence hash + fraud + served-honest + total jobs per unit; identical fraud, served-honest, MR, jobs per repro seed",
+  "generatedAt": "2026-10-24T13:33:33.506Z"
+}

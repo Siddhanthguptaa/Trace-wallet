@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Provider {
+  id                     String   @id @default(cuid())
+  name                   String
+  description            String
+  capability             String
+  priceSats              Int
+  reputationScore        Float    @default(3.0)
+  totalJobs              Int      @default(0)
+  flagCount              Int      @default(0)  // Human flags for bad work — 3+ flags with rep < 2.0 = suspended
+  walletId               String   @default("")
+  payoutLightningAddress String   @default("") // LNURL-pay address — providers receive payouts here
+  totalEarnedSats        Int      @default(0)  // Lifetime sats actually paid out via Lightning
+  // ─── x402 (USDC stablecoin) — second payment rail alongside Lightning ────
+  payoutRail             String   @default("lightning") // "lightning" | "x402"
+  payoutUsdcAddress      String   @default("") // EVM address (0x...) on Base — x402 payouts go here
+  totalEarnedUsdcAtomic  Int      @default(0)  // Lifetime micro-USDC (6 decimals) actually paid out on-chain
+  endpointUrl            String
+  isActive               Boolean  @default(true)
+  // Staking — providers stake sats as collateral. Slashed on 3 flags + low rep.
+  stakeSats              Int      @default(0)      // Amount staked (e.g. 100 sats)
+  stakeStatus            String   @default("none") // "none" | "pending" | "staked" | "slashed"
+  stakePaymentHash       String   @default("")     // Lightning proof of stake payment
+  // Competitive Bidding — providers can undercut their listed price
+  bidMultiplier          Float    @default(1.0)     // 0.5–1.0: effective price = priceSats * bidMultiplier
+
+  // ─── TRACE / SatsCredit Fields ───────────────────────────────────────
+  traceScore             Float    @default(500.0)   // Composite economic trust score [0–1000]
+  riskTier               String   @default("B")     // "A" | "B" | "C" | "D" — derived from traceScore
+  defaultProbability     Float    @default(0.05)     // Estimated P(default) [0–1]
+  completionRate         Float    @default(1.0)      // Successful completions / total jobs [0–1]
+  repaymentRate          Float    @default(1.0)      // On-time payments honoured / total [0–1]
+  successfulEscrowRate   Float    @default(1.0)      // Escrows released vs total escrows [0–1]
+  disputeRate            Float    @default(0.0)      // Disputes / total jobs [0–1]
+  networkTrust           Float    @default(0.0)      // Graph-derived trust propagation score
+  sybilRisk              Float    @default(0.0)      // Sybil detection risk score [0–1]
+  stakeRatio             Float    @default(0.0)      // stakeSats / totalEconomicVolume
+  scoreVolatility        Float    @default(0.0)      // Standard deviation of recent score changes
+  totalEconomicVolume    Int      @default(0)        // Total sats transacted (all jobs)
+  successfulJobs         Int      @default(0)
+  failedJobs             Int      @default(0)
+  defaultedJobs          Int      @default(0)
+  disputedJobs           Int      @default(0)
+  isBlocked              Boolean  @default(false)
+  blockReason            String?
+  
+  // ─── v2.9 Phase 2: Advanced Fraud Detection ─────────────────────────
+  recentFailureWindow    Int      @default(0)        // Count of failures in last 10 jobs (for clustering detection)
+  failureCorrelation     Float    @default(0.0)      // Correlation of failures with graph neighbors [0-1]
+
+  // ─── v3.0: Theoretical Foundations (CUSUM) ──────────────────────────
+  cusumScore             Float    @default(0.0)      // CUSUM change-point statistic; alarm when > 4.2 (Page 1954)
+  cusumSensitive         Float    @default(0.0)      // Sensitive CUSUM (K₂=0.90, H₂=2.5); detects 15% failure rate (Tartakovsky & Veeravalli 2005)
+
+  createdAt              DateTime @default(now())
+  jobs                   Job[]
+  scoreHistory           ScoreHistory[]
+  economicEvents         EconomicEvent[]
+  // Trust graph edges where this provider is the source
+  trustEdgesOut          TrustEdge[]      @relation("TrustSource")
+  // Trust graph edges where this provider is the target
+  trustEdgesIn           TrustEdge[]      @relation("TrustTarget")
+  routingDecisions       RoutingDecision[]
+}
+
+/// TRACE economic event — granular record of every economic action.
+/// Purpose: reproducibility, analytics, score evolution, research evidence.
+model EconomicEvent {
+  id          String   @id @default(cuid())
+  providerId  String
+  jobId       String?
+  eventType   String   // JOB_SUCCESS | JOB_FAILURE | PAYMENT_SETTLED | ESCROW_RELEASED | ESCROW_REFUNDED | DISPUTE | DEFAULT | STAKE_ADDED | STAKE_SLASHED
+  amountSats  Int      @default(0)
+  metadata    String   @default("{}")  // JSON: additional context (evidence, counterparty, etc.)
+  createdAt   DateTime @default(now())
+
+  provider    Provider @relation(fields: [providerId], references: [id])
+
+  @@index([providerId, createdAt])
+  @@index([eventType, createdAt])
+}
+
+/// TRACE score history — longitudinal trust tracking.
+/// Purpose: volatility analysis, fraud detection, score evolution graphs.
+model ScoreHistory {
+  id                String   @id @default(cuid())
+  providerId        String
+  traceScore        Float
+  riskTier          String
+  defaultProbability Float
+  completionRate    Float
+  repaymentRate     Float
+  networkTrust      Float
+  sybilRisk         Float
+  triggerEvent      String   @default("") // What caused this snapshot (e.g. "JOB_SUCCESS", "DISPUTE")
+  createdAt         DateTime @default(now())
+
+  provider          Provider @relation(fields: [providerId], references: [id])
+
+  @@index([providerId, createdAt])
+}
+
+/// Trust graph edge — economically-derived trust between providers/buyers.
+/// Purpose: PageRank-style centrality, trust propagation, sybil detection.
+model TrustEdge {
+  id                    String   @id @default(cuid())
+  sourceProviderId      String
+  targetProviderId      String
+  weight                Float    @default(1.0) // Edge weight: f(economic volume, success count, escrow reliability)
+  successfulCoJobs      Int      @default(0)   // Number of successful co-jobs in the same orchestration
+  economicVolume        Int      @default(0)   // Total sats transacted between these two
+  escrowReliability     Float    @default(1.0) // Fraction of escrows that resolved cleanly
+  lastInteraction       DateTime @default(now())
+  createdAt             DateTime @default(now())
+
+  source                Provider @relation("TrustSource", fields: [sourceProviderId], references: [id])
+  target                Provider @relation("TrustTarget", fields: [targetProviderId], references: [id])
+
+  @@unique([sourceProviderId, targetProviderId])
+  @@index([sourceProviderId])
+  @@index([targetProviderId])
+}
+
+/// TRACE routing decision log — instrumentation for research.
+/// Purpose: reproducibility, experiment registry, publishable evidence.
+model RoutingDecision {
+  id                String   @id @default(cuid())
+  jobId             String?
+  capability        String
+  selectedProviderId String
+  utilityScore      Float    @default(0.0)  // Routing utility for the selected provider
+  candidateScores   String   @default("[]") // JSON array of {providerId, utility, rejected, reason}
+  routingPolicy     String   @default("TRACE") // "TRACE" | "REPUTATION" | "PRICE" — for A/B experiments
+  experimentId      String?  // Links to experiment registry
+  createdAt         DateTime @default(now())
+
+  selectedProvider  Provider @relation(fields: [selectedProviderId], references: [id])
+
+  @@index([capability, createdAt])
+  @@index([routingPolicy, createdAt])
+}
+
+model Buyer {
+  id                 String   @id @default(cuid())
+  name               String
+  walletId           String   @default("")
+  dailyBudgetSats    Int      @default(100)
+  perIncidentCapSats Int      @default(50)
+  spentTodaySats     Int      @default(0)
+  lastResetDate      DateTime @default(now())
+  jobs               Job[]
+}
+
+model Job {
+  id                    String      @id @default(cuid())
+  buyerId               String
+  providerId            String
+  capability            String
+  inputHash             String
+  input                 String      @default("{}")
+  status                String      // pending_payment | paid | running | completed | failed | blocked
+  invoiceId             String?
+  invoicePayReq         String?
+  priceSats             Int
+  feeSats               Int         @default(0)
+  paymentHash           String?     // Lightning payment hash — proof of L402 payment (Riya → MDK)
+  paymentPreimage       String?     // Lightning preimage — cryptographic payment proof
+  payoutHash            String?     // Lightning payment hash — proof of payout to provider
+  payoutPreimage        String?     // Lightning preimage — cryptographic payout proof
+  payoutSats            Int         @default(0) // Amount paid to provider (price - fee)
+  // Rail this job settles on. Snapshotted from provider.payoutRail at creation
+  // (same convention as priceSats/feeSats being snapshotted, not looked up live).
+  // When "x402": priceSats/feeSats/payoutSats hold micro-USDC atomic units instead
+  // of sats, and paymentHash/payoutHash hold an on-chain tx hash instead of a
+  // Lightning payment hash. paymentPreimage/payoutPreimage stay null — x402 has
+  // no preimage concept, proof is the settlement transaction itself.
+  rail                  String      @default("lightning") // "lightning" | "x402"
+  // Escrow — application-layer HODL invoice pattern
+  escrowStatus          String      @default("none") // "none" | "funded" | "held" | "released" | "refunded" | "disputed"
+  escrowReleasedAt      DateTime?   // When escrow was released to provider
+  escrowRefundedAt      DateTime?   // When escrow was refunded to buyer
+  result                String?
+  createdAt             DateTime    @default(now())
+  paidAt                DateTime?
+  completedAt           DateTime?
+  buyer                 Buyer       @relation(fields: [buyerId], references: [id])
+  provider              Provider    @relation(fields: [providerId], references: [id])
+  humanTasks            HumanTask[]
+}
+
+model HumanTask {
+  id          String    @id @default(cuid())
+  jobId       String
+  question    String
+  context     String
+  status      String    @default("pending") // pending | approved | rejected
+  response    String?
+  rewardSats  Int       @default(15)
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  job         Job       @relation(fields: [jobId], references: [id])
+}
+
+model RecentCall {
+  id         String   @id @default(cuid())
+  buyerId    String
+  capability String
+  inputHash  String
+  calledAt   DateTime @default(now())
+}
+
+model EventLog {
+  id        String   @id @default(cuid())
+  type      String   // route | payment | execution | completion | human_task | bounty | error
+  message   String
+  data      String   @default("{}")
+  createdAt DateTime @default(now())
+}
+
+/// Human Bounty Market — tasks that only humans can do.
+/// AI agents post bounties; humans claim them and earn real sats via Lightning.
+model Bounty {
+  id              String    @id @default(cuid())
+  jobId           String?   // optional link to the originating Job
+  type            String    // "verify" | "rate" | "label" | "write" | "flag"
+  title           String
+  description     String
+  context         String    @default("{}")  // JSON context for the task
+  rewardSats      Int
+  status          String    @default("open") // open | claimed | submitted | completed | expired
+  claimedBy       String?   // human identifier (Lightning address or display name)
+  claimedAt       DateTime?
+  submission      String?   // the human's answer/submission
+  paymentHash     String?   // proof of Lightning payment to human
+  paymentPreimage String?   // cryptographic proof the human was paid
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+  expiresAt       DateTime? // auto-expire after this time
+}

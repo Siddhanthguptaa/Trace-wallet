@@ -1,0 +1,39 @@
+{
+  "upstream": {
+    "repo": "https://github.com/NikunjKaushik20/Trace_CIKM",
+    "commit": "94c4b9f",
+    "fetched": "codeload tarball 2026-10-24, no git",
+    "vendoredPaths": ["data/", "paper/", "prisma/schema.prisma", "scripts/ (except recoveryBaseline.ts)", "src/ (except src/lib/openaiModel.ts, src/lib/events.ts)"],
+    "vendoredFilesModified": []
+  },
+  "stubs": {
+    "src/lib/openaiModel.ts": "missing upstream; exports OPENAI_CHAT_MODEL = 'gpt-4o-mini' (same constant as the author's SatsRouter source); only a MODEL_PRESETS key",
+    "src/lib/events.ts": "missing upstream; logEvent is a no-op (original writes a dashboard EventLog row no simulation code reads)",
+    "scripts/recoveryBaseline.ts": "missing upstream; computeRecoveryMetric returns recoveryRound null (post-hoc diagnostic only)"
+  },
+  "build": {
+    "package.json": "standalone npm project (not a pnpm workspace member); versions pinned to the author's SatsRouter lock",
+    "package-lock.json": "closure of package.json deps, resolved/integrity copied from the author's SatsRouter lockfile (installable offline from the npm cache)",
+    ".npmrc": "audit/fund off, prefer-offline",
+    "tsconfig.json": "CommonJS for tsx (the vendored runner uses require())",
+    "prisma.config.ts": "Prisma 7 CLI config (datasource url)",
+    "prisma/init.sql": "DDL generated once by `prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script` (schema engine 3c6e1927)"
+  },
+  "hypnexis": {
+    "hx/dbInit.ts": "fresh per-cell SQLite file from prisma/init.sql (no Prisma CLI at cell time)",
+    "hx/cellWorker.ts": "one cell or buyer session per process; centralized = _publicationMatrixWorker contract, partitioned = the author's _partitionedViewWorker contract; seeds the REPUTATION/PRICE Math.random jitter per session; optional SIM_DB=memory",
+    "hx/pool.ts": "bounded-concurrency subprocess pool, RAM-gated, resume-safe",
+    "hx/repro.ts": "M6 repro gate (Table 1 TRACE-no-bandit strategic-default, seeds 42-51)",
+    "hx/genRunnerHx.ts": "generator for hx/runnerHx.ts",
+    "hx/runnerHx.ts": "GENERATED copy of src/lib/trace/experiments/runner.ts with re-rooted imports + a selection hook (bit-identical without a hook, see hx/test.ts)",
+    "hx/tierRule.ts": "pre-registered tier rule (FLAGGED / PROVEN = LCB95 >= LCB95(3,0) / UNPROVEN) + simulator flag adapter + attestor decision-code adapter",
+    "hx/tier_vectors.json": "tier-rule test vectors for cross-implementation checks (attestor)",
+    "hx/ebPolicy.ts": "TRACE+EB(B) selection hook",
+    "hx/memPrisma.ts": "in-memory implementation of the Prisma subset the simulator uses (via the globalThis.prisma hook in src/lib/db.ts)",
+    "hx/memCheck.ts": "gate: memory backend must reproduce Prisma+SQLite job sequences and the repro cells bit for bit",
+    "hx/x4.ts": "X4 sweep runner, partitioned regime, 360 cells as 1800 buyer-session units, resumable",
+    "hx/test.ts": "tier rule, runnerHx equivalence, EB invariants",
+    "analysis/x4_analyze.py": "pre-registered frontier test, summary CSV, plots, x4_h1.json (stdlib only)",
+    "analysis/x4_report.py": "writes docs/x4_report.md from results files"
+  }
+}

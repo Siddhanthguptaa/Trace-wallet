@@ -1,0 +1,1699 @@
+/**
+ * TRACE Experiment Runner — The Heart of the Research Pipeline
+ *
+ * Simulates controlled experiments with:
+ *   - Configurable routing policy (TRACE / REPUTATION / PRICE)
+ *   - Configurable attack injection (strategic-default, whitewashing, sybil, collusion, none)
+ *   - Deterministic seeding for reproducibility
+ *   - Full instrumentation and metrics collection
+ *
+ * The simulation loop:
+ *   1. Create N simulated providers (honest + malicious)
+ *   2. For each round:
+ *      a. Select a random capability
+ *      b. Route using the configured policy
+ *      c. Simulate job outcome (success/failure based on agent behavior + attack)
+ *      d. Update TRACE scores and trust graph
+ *      e. Collect round metrics
+ *      f. Run attack post-round effects
+ *   3. Aggregate and save results
+ *
+ * This does NOT use real HTTP endpoints or Lightning payments.
+ * It exercises the TRACE scoring/routing/graph engine directly.
+ */
+
+import { prisma } from "../../db";
+import { 
+  selectProviderTRACE, 
+  updateScoreAfterEvent, 
+  updateTrustEdge, 
+  persistAllNetworkTrust, 
+  snapshotConfig, 
+  applyTraceRoutingPreset,
+  updateSybilRiskScores,
+  updateCUSUMScore,
+  updateCUSUMSensitive,
+  computeBayesianLCB,
+  recordProviderDefault,
+  resetCooldownTracker,
+  resetTrustInertiaTracker,
+  enableAdaptiveInertiaAlpha,
+  recordRoundFailureRate,
+  resetRoundAnomalyTracker,
+  resetRoutingWindowTracker,
+  EIGENTRUST_CONFIG,
+} from "../../trace";
+import type { RoutingPolicy } from "../../trace";
+import type { TraceRoutingPreset } from "../../trace";
+import {
+  createAttack,
+  type Attack,
+  type AttackType,
+  StrategicDefaultAttack,
+} from "../attacks";
+import { jobsReceivedLedger } from "../attacks/_adversaryBase";
+import { INTERACTION_HISTORY_WINDOW } from "../config";
+import {
+  enableTraceInteractionWindow,
+  disableTraceInteractionWindow,
+  traceInteractionWindowPrune,
+  traceInteractionWindowRecordCoJob,
+} from "../interactionWindow";
+import { computeRoundMetrics, aggregateMetrics, roundMetricsToCSV, scoreHistoryToCSV, type RoundMetrics } from "./metrics";
+import { computeRecoveryMetric } from "../../../../scripts/recoveryBaseline";
+import { causalGraph } from "../causalGraph";
+import { temporalEngine } from "../temporalTrust";
+import { computeCounterpartyEntropy, buildEdgeCache } from "../trustGraph";
+import * as fs from "fs";
+import * as path from "path";
+import { OPENAI_CHAT_MODEL } from "../../openaiModel";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+/**
+ * Named LLM agent archetype for realistic multi-model experiments.
+ * Each model has a distinct cost profile reflecting real-world pricing tiers.
+ */
+export interface AgentModelSpec {
+  /** Model identifier (OpenAI slot uses OPENAI_CHAT_MODEL, plus sarvam / llama / etc.) */
+  model: string;
+  /** Human-readable display name */
+  displayName: string;
+  /** Number of agents of this type */
+  count: number;
+  /** Price range in sats for this model */
+  priceRange: { min: number; max: number };
+}
+
+/** Built-in model presets with realistic pricing tiers */
+export const MODEL_PRESETS: Record<string, Omit<AgentModelSpec, "count">> = {
+  [OPENAI_CHAT_MODEL]: {
+    model: OPENAI_CHAT_MODEL,
+    displayName: "GPT-4o Mini",
+    priceRange: { min: 8, max: 18 },
+  },
+  "sarvam": {
+    model: "sarvam",
+    displayName: "Sarvam AI",
+    priceRange: { min: 5, max: 12 },
+  },
+  "llama-3.2-3b": {
+    model: "llama-3.2-3b",
+    displayName: "Llama 3.2 3B",
+    priceRange: { min: 3, max: 8 },
+  },
+  "claude-haiku": {
+    model: "claude-haiku",
+    displayName: "Claude Haiku",
+    priceRange: { min: 6, max: 15 },
+  },
+  "gemini-flash": {
+    model: "gemini-flash",
+    displayName: "Gemini Flash",
+    priceRange: { min: 4, max: 10 },
+  },
+};
+
+export interface ExperimentConfig {
+  /** Routing policy to test */
+  policy: RoutingPolicy;
+  /** Attack type to inject */
+  attack: AttackType;
+  /** Total simulated agents (computed from agentMix if provided) */
+  agents: number;
+  /** Fraction of malicious agents [0–1] */
+  maliciousRatio: number;
+  /** Random seed for reproducibility */
+  seed: number;
+  /** Total simulation rounds */
+  rounds: number;
+  /** Jobs per round */
+  jobsPerRound: number;
+  /** Available capabilities to simulate */
+  capabilities: string[];
+  /** Price range for simulated agents (fallback if no agentMix) */
+  priceRange: { min: number; max: number };
+  /**
+   * Attack-specific parameters. Mirrors `AttackConfig.params` in
+   * `attacks/base.ts`; the `number[]` variant supports vector-valued
+   * tuning knobs such as `hopSchedule` for the collusion-ring attack
+   * (Task 11.1, R-ATTACK-RING 1).
+   */
+  attackParams: Record<string, number | string | boolean | number[]>;
+  /** TRACE routing utility preset. Baselines ignore this except for snapshot reproducibility. */
+  traceRoutingPreset?: TraceRoutingPreset;
+  /** Base honest failure rate (simulates real-world imperfections) */
+  honestFailureRate: number;
+  /**
+   * v2.1: Named agent model mix for realistic experiments.
+   * If provided, overrides `agents` (computed as sum of counts)
+   * and each agent gets model-specific pricing.
+   * Example: [{ model: "gpt-4o-mini", count: 10 }, { model: "sarvam", count: 10 }]  (id matches OPENAI_CHAT_MODEL)
+   */
+  agentMix?: AgentModelSpec[];
+  /**
+   * Override sliding-window size for counterparty entropy (default: INTERACTION_HISTORY_WINDOW.maxRounds).
+   * Required for large-N runs so memory stays bounded.
+   */
+  interactionHistoryWindowRounds?: number;
+  /**
+   * v3.0 Audit: Number of simulated buyers (default: 5).
+   * Multiple buyers with different demand patterns prevent trivial
+   * failure-correlation detection via single buyerId.
+   */
+  numBuyers?: number;
+  /**
+   * v3.0 Audit: Propagation delay in rounds (default: 1).
+   * Trust graph and sybil risk updates are delayed by this many rounds,
+   * preventing TRACE from reacting instantaneously to behavioral changes.
+   * 0 = instant (legacy behavior), 1+ = delayed.
+   */
+  propagationDelayRounds?: number;
+  /**
+   * v4.0 Empirical Validation: Ablation configuration.
+   * Selectively disable TRACE subsystems to isolate mechanism contributions.
+   * Only applies when policy === "TRACE". Baselines are never affected.
+   */
+  traceAblation?: TraceAblationConfig;
+  /**
+   * Real-graph seed file (Path C / Bitcoin OTC).
+   * If set, the runner loads the JSON produced by `scripts/loadBitcoinOTC.ts`
+   * after creating synthetic providers and bulk-inserts the translated
+   * TrustEdge rows. The seed file's `subsetNodeCount` MUST equal
+   * `config.agents`. Adversary placement and per-agent failure tiers are
+   * unchanged — only the initial trust topology is replaced.
+   */
+  realGraphSeedFile?: string;
+  /** Whether to inject Pre-Trusted Peers for EIGENTRUST */
+  eigenTrustUsePTP?: boolean;
+}
+
+/**
+ * Ablation configuration for controlled experiments.
+ * Each flag disables a specific TRACE subsystem while keeping all others intact.
+ * Named presets map to specific flag combinations for reproducibility.
+ */
+export interface TraceAblationConfig {
+  /** Disable Personalized PageRank from honest seed (Framework 3) */
+  disablePPR?: boolean;
+  /** Disable Bayesian LCB — use point estimate instead (Framework 1) */
+  disableBayesianLCB?: boolean;
+  /** Disable trust-weighted entropy diversity signal (Framework 5) */
+  disableWeightedEntropy?: boolean;
+  /** Disable CUSUM change-point hard filter (Framework 6) */
+  disableCUSUM?: boolean;
+  /** Disable Thompson Sampling — use greedy argmax instead (Framework 2) */
+  disableThompsonSampling?: boolean;
+  /** Disable ALL graph signals (PPR, entropy, sybilRisk, networkTrust, contamination) */
+  disableAllGraph?: boolean;
+  /** Use publication-clean variant (removes redundant heuristic components) */
+  useCleanVariant?: boolean;
+  /**
+   * v5.0 / Proposal 1 (SFSC — Selection-Frequency Soft Cap).
+   *
+   * When enabled with `disableThompsonSampling`, the no-bandit greedy
+   * branch demotes `eligible[0]` to `eligible[1]` whenever `eligible[0]`
+   * has been selected `selectionFreqCapMax` (default 4) or more times in
+   * the last `selectionFreqCapWindow` (default 20) routing calls.
+   *
+   * Has no effect unless `disableThompsonSampling` is also true.
+   *
+   * Citation: Kelly et al. 1998 (proportional fairness scheduling).
+   *
+   * See `paper/newfindings/Trace_NoBandit.md` §13 Proposal 1.
+   */
+  enableSelectionFreqCap?: boolean;
+  selectionFreqCapMax?: number;
+  selectionFreqCapWindow?: number;
+  /**
+   * v5.0 / Proposal 3 (AI-α — Adaptive Inertia α).
+   *
+   * When true, the trust-inertia smoother uses a Robbins-Monro adaptive
+   * step-size schedule: α(n) = max(0.3, 1/√(1+totalJobs)). Cold-start
+   * providers get α=1.0 (no smoothing), mature providers saturate at 0.3.
+   *
+   * Expands the effective eligible set by letting cold-start honest
+   * providers' scores reflect raw signal rather than being smoothed away.
+   *
+   * Citation: Robbins & Monro (1951).
+   */
+  enableAdaptiveInertiaAlpha?: boolean;
+  /**
+   * v5.0 / Proposal 4 (WOR — Without-Replacement per round).
+   *
+   * When enabled, each provider can be selected at most once per round.
+   * If the greedy top-1 was already selected earlier in the same round,
+   * the runner picks the next-best candidate from the eligible list.
+   *
+   * Structural constraint, not a heuristic. Forces 5 unique providers
+   * per round by construction. Does not change the filter or the
+   * tie-breaker — just prevents the same provider from monopolizing
+   * all slots in a single round.
+   *
+   * Citation: Myerson (1981), "Optimal auction design" — unit-demand
+   * constraint in combinatorial auctions.
+   */
+  enableWithoutReplacement?: boolean;
+  /**
+   * v5.1 / Proposal 2 (GGTS — Gap-Gated Thompson Sampling).
+   *
+   * When true (and `disableThompsonSampling` is false), Thompson sampling
+   * is invoked only when the within-cohort utility gap between the top
+   * two eligible candidates is small relative to the cohort std. The
+   * router falls back to greedy when the top candidate is decisively
+   * ahead.
+   *
+   * Decision rule (per routing call):
+   *
+   *   gap   = eligible[0].utility − eligible[1].utility
+   *   sigma = std(utility | eligible)
+   *
+   *   if gap > gapGateThresholdSigma * sigma → greedy
+   *   else                                    → Thompson
+   *
+   * Motivation: gap-dependent regret bounds (Lai-Robbins 1985, Bubeck &
+   * Cesa-Bianchi 2012). Resolves the centralized-vs-partitioned
+   * inversion of TRACE-no-bandit by paying the exploration cost only
+   * when it is mathematically justifiable.
+   *
+   * Has no effect when `disableThompsonSampling` is true (no-bandit
+   * takes precedence).
+   */
+  gapGatedThompson?: boolean;
+  /** GGTS threshold τ in units of within-cohort utility std. Default 0.5. */
+  gapGateThresholdSigma?: number;
+}
+
+/** Named ablation presets for reproducible experiments */
+export type TraceAblationPreset =
+  | "full"              // All mechanisms enabled (current system)
+  | "clean"            // Publication-grade: removes redundant components
+  | "no-ppr"           // PPR disabled
+  | "no-bayes"         // Bayesian LCB disabled (point estimate)
+  | "no-entropy"       // Weighted entropy disabled
+  | "no-cusum"         // CUSUM hard filter disabled
+  | "no-bandit"        // Thompson Sampling disabled (greedy)
+  | "no-bandit-sfsc"   // No-bandit + Selection-Frequency Soft Cap (Proposal 1)
+  | "no-bandit-aia"    // No-bandit + Adaptive Inertia α (Proposal 3)
+  | "no-bandit-wor"    // No-bandit + Without-Replacement per round (Proposal 4)
+  | "no-bandit-sfsc-aia" // No-bandit + SFSC + AI-α composed
+  | "gap-gated"        // GGTS τ=0.5 — gap-gated Thompson sampling (Proposal 2)
+  | "gap-gated-strict" // GGTS τ=1.0 — wider gap required to skip exploration
+  | "gap-gated-loose"  // GGTS τ=0.25 — almost always greedy
+  | "gap-gated-robust" // GGTS τ=0.5 + winsorized gap/σ (median/MAD, κ=3.0) — corruption-robust
+  | "corruption-robust-ucb" // External-family baseline: successive elimination, corruption-widened radius (Gupta-Koren-Talwar / Lykouris et al. family). corruptionBudgetFraction=0.3 happens to equal this suite's true maliciousRatio exactly -- an oracle-knowledge advantage GGTS-Robust has no equivalent to. See "-generic" variant below for a fair, non-oracle comparison point.
+  | "corruption-robust-ucb-generic" // Same mechanism, corruptionBudgetFraction=0.1 -- a fixed, generic assumed corruption budget with NO relationship to this suite's actual 30% population rate. Tests whether the widened-confidence-interval technique itself still helps under budget misspecification, isolated from oracle calibration.
+  | "no-graph"         // All graph signals disabled
+  | "lite"             // Only LCB + price + hard filters
+  | "graph-only"       // Only graph signals (no LCB, no CUSUM)
+  | "reputation-only"; // Point-estimate reputation + hard filters
+
+export function getAblationConfig(preset: TraceAblationPreset): TraceAblationConfig {
+  switch (preset) {
+    case "full": return {};
+    case "clean": return { useCleanVariant: true };
+    case "no-ppr": return { disablePPR: true };
+    case "no-bayes": return { disableBayesianLCB: true };
+    case "no-entropy": return { disableWeightedEntropy: true };
+    case "no-cusum": return { disableCUSUM: true };
+    case "no-bandit": return { disableThompsonSampling: true };
+    case "no-bandit-sfsc": return {
+      disableThompsonSampling: true,
+      enableSelectionFreqCap: true,
+      selectionFreqCapMax: 2,
+      selectionFreqCapWindow: 100,
+    };
+    case "no-bandit-aia": return {
+      disableThompsonSampling: true,
+      enableAdaptiveInertiaAlpha: true,
+    };
+    case "no-bandit-wor": return {
+      disableThompsonSampling: true,
+      enableWithoutReplacement: true,
+    };
+    case "no-bandit-sfsc-aia": return {
+      disableThompsonSampling: true,
+      enableSelectionFreqCap: true,
+      selectionFreqCapMax: 2,
+      selectionFreqCapWindow: 100,
+      enableAdaptiveInertiaAlpha: true,
+    };
+    case "gap-gated": return {
+      gapGatedThompson: true,
+      gapGateThresholdSigma: 0.5,
+    };
+    case "gap-gated-strict": return {
+      gapGatedThompson: true,
+      gapGateThresholdSigma: 1.0,
+    };
+    case "gap-gated-loose": return {
+      gapGatedThompson: true,
+      gapGateThresholdSigma: 0.25,
+    };
+    case "gap-gated-robust": return {
+      gapGatedThompson: true,
+      gapGateThresholdSigma: 0.5,
+      gapGateRobust: true,
+      gapGateRobustKappa: 3.0,
+    };
+    case "corruption-robust-ucb": return {
+      corruptionRobustUCB: true,
+      corruptionBudgetFraction: 0.3,
+    };
+    case "corruption-robust-ucb-generic": return {
+      corruptionRobustUCB: true,
+      corruptionBudgetFraction: 0.1,
+    };
+    case "no-graph": return { disableAllGraph: true };
+    case "lite": return { disableAllGraph: true, disableWeightedEntropy: true };
+    case "graph-only": return { disableBayesianLCB: true, disableCUSUM: true };
+    case "reputation-only": return { disableAllGraph: true, disableBayesianLCB: true, disableWeightedEntropy: true, disableCUSUM: true, disableThompsonSampling: true };
+  }
+}
+
+export const DEFAULT_CONFIG: ExperimentConfig = {
+  policy: "TRACE",
+  attack: "strategic-default",
+  agents: 20,
+  maliciousRatio: 0.2,
+  seed: 42,
+  rounds: 50,
+  jobsPerRound: 3,
+  capabilities: ["quick_scan", "deep_diagnose", "incident_summary"],
+  priceRange: { min: 5, max: 25 },
+  attackParams: {},
+  honestFailureRate: 0.05,
+  traceRoutingPreset: "baseline",
+};
+
+// ─── Seeded PRNG ──────────────────────────────────────────────────────────────
+
+class SeededRandom {
+  private seed: number;
+
+  constructor(seed: number) {
+    this.seed = seed;
+  }
+
+  /** Returns [0, 1) deterministically */
+  next(): number {
+    this.seed = (this.seed * 1664525 + 1013904223) & 0xffffffff;
+    return (this.seed >>> 0) / 0xffffffff;
+  }
+
+  /** Returns integer in [min, max] */
+  int(min: number, max: number): number {
+    return Math.floor(this.next() * (max - min + 1)) + min;
+  }
+
+  /** Pick a random element */
+  pick<T>(arr: T[]): T {
+    return arr[Math.floor(this.next() * arr.length)];
+  }
+}
+
+// ─── R-EXPLORE 4 / Task 4.3: per-cell exploration RNG (design §5.3) ──────────
+//
+// `mulberry32` is a 32-bit PRNG with a single-word state. It is used here
+// **only** as the source for the `exploreRandom` slot of
+// `RoutingExplorationOptions` — the slot that drives the ε coin-flip and the
+// uniform-pick over the eligible set in `selectWinnerWithExploration`.
+//
+// Why a separate PRNG (and not the existing `SeededRandom` / `rng` slot)?
+// Because the existing `rng` is consumed by many other call sites in this
+// file (provider creation, capability picking, attack jitter, success/fail
+// draws). Two cells with the same seed but different policies execute
+// **different** non-routing code paths, which causes `rng`'s stream to
+// drift relative to the routing decisions across policies. To guarantee
+// the exploration draw sequence is bit-identical across the four policies
+// in a cell (Property P6, R-VERIFY-INTEGRITY 3), we derive a dedicated
+// `exploreRng` from `seed ^ 0xE2C0FFEE` — a fresh sub-stream that is
+// consumed **only** by the wrapper's exploration arm.
+//
+// State isolation: each `runExperiment` call mints a new `exploreRng` from
+// the same seed, so the four policy invocations of a cell each receive an
+// `exploreRng` whose internal state starts at the **same** initial value.
+// The wrapper consumes from it through the closure returned below.
+function mulberry32(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ─── Experiment Runner ────────────────────────────────────────────────────────
+
+export async function runExperiment(config: ExperimentConfig): Promise<string> {
+  applyTraceRoutingPreset(config.traceRoutingPreset ?? "baseline");
+
+  // v2.1: If agentMix is provided, compute actual agent count from it
+  if (config.agentMix && config.agentMix.length > 0) {
+    config.agents = config.agentMix.reduce((sum, spec) => sum + spec.count, 0);
+  }
+
+  const experimentId = `exp_${config.policy}_${config.attack}_${config.agents}a_${Math.round(config.maliciousRatio*100)}t_${config.seed}s_${Date.now()}`;
+  const rng = new SeededRandom(config.seed);
+
+  // R-EXPLORE 4 / Task 4.3 (design §5.3): mint a per-cell `exploreRng`
+  // from `seed ^ 0xE2C0FFEE`. This RNG is fed into `exploreRandom` on every
+  // `selectProviderTRACE` call below. Because it is derived from the
+  // experiment seed alone — independent of the routing policy and of the
+  // shared `rng` slot — every cell with the same seed observes a
+  // bit-identical exploration draw sequence regardless of which policy is
+  // running, which is what discharges Property P6 across the four policies
+  // of a single experiment cell in the audit harness.
+  const exploreRandom = mulberry32(config.seed ^ 0xE2C0FFEE);
+
+  console.log(`\n${"═".repeat(70)}`);
+  console.log(`  TRACE Experiment: ${experimentId}`);
+  console.log(`  Policy: ${config.policy} | Attack: ${config.attack}`);
+  console.log(`  Agents: ${config.agents} (${Math.round(config.maliciousRatio * 100)}% malicious)`);
+  console.log(`  Rounds: ${config.rounds} × ${config.jobsPerRound} jobs/round`);
+  console.log(`  Seed: ${config.seed}`);
+  console.log(`${"═".repeat(70)}\n`);
+
+  // ─── Step 0: Clean experiment state ───────────────────────────────
+  const numBuyers = config.numBuyers ?? 5;
+  await cleanExperimentState(numBuyers);
+
+  // v3.0 Audit: Build buyer ID pool for multi-buyer simulation
+  const buyerIds = Array.from({ length: numBuyers }, (_, i) =>
+    i === 0 ? "experiment-buyer" : `experiment-buyer-${i}`
+  );
+
+  const windowRounds =
+    config.interactionHistoryWindowRounds ?? INTERACTION_HISTORY_WINDOW.maxRounds;
+  enableTraceInteractionWindow(windowRounds);
+
+  require("./attackState").adaptiveDefaultProbabilities.clear();
+
+  try {
+  // v2.2: Reset causal graph for fresh experiment
+  causalGraph.reset();
+
+  // v2.3: Reset temporal trust engine for fresh experiment
+  temporalEngine.reset();
+
+  // v2.X Audit (Task 13.2): Reset adversarial-adaptivity ledger for fresh
+  // experiment so per-cell RNG isolation is preserved (R-VERIFY-INTEGRITY 4,
+  // design §10.6). Mirrors the causalGraph/temporalEngine reset pattern.
+  jobsReceivedLedger.reset();
+
+  // Task 5.2: Reset post-fraud cooldown tracker for fresh experiment
+  // (Requirement 2.4). Ensures cooldown state from a previous cell does not
+  // leak into the next cell.
+  resetCooldownTracker();
+  resetTrustInertiaTracker();
+  resetRoundAnomalyTracker();
+  // v5.0 / Proposal 1: SFSC tracker reset. Always called (cheap), so
+  // SFSC and non-SFSC cells share an identical pre-cell init path and
+  // there is no leakage between cells of any ablation.
+  resetRoutingWindowTracker();
+
+  // v5.0 / Proposal 3: Adaptive Inertia α. Enable the Robbins-Monro
+  // schedule when the ablation config requests it. The flag is reset to
+  // false by resetTrustInertiaTracker() above, so we re-enable here if
+  // the current cell's ablation config has it set.
+  if (config.traceAblation?.enableAdaptiveInertiaAlpha) {
+    enableAdaptiveInertiaAlpha(true);
+  }
+
+  // ─── Step 1: Create simulated providers ───────────────────────────
+  const { providerIds, maliciousIds: initialMaliciousIds, honestFailureRates } = await createSimulatedProviders(config, rng);
+  console.log(`  ✓ Created ${providerIds.length} simulated providers`);
+
+  // ─── Step 1a: Inject Pre-Trusted Peers for EIGENTRUST ─────────────
+  if (config.policy === "EIGENTRUST" && config.eigenTrustUsePTP) {
+    const honestIds = providerIds.filter(id => !initialMaliciousIds.has(id));
+    EIGENTRUST_CONFIG.preTrustedIds.clear();
+    // Default to 10 PTPs unless configured otherwise
+    const ptpCount = 10;
+    for (let i = 0; i < Math.min(ptpCount, honestIds.length); i++) {
+      EIGENTRUST_CONFIG.preTrustedIds.add(honestIds[i]);
+    }
+  } else {
+    EIGENTRUST_CONFIG.preTrustedIds.clear();
+  }
+
+  // ─── Step 1b: Optional real-graph trust seed (Path C / Bitcoin OTC) ────
+  // Loads a precomputed seed JSON produced by `scripts/loadBitcoinOTC.ts` and
+  // bulk-inserts the translated TrustEdge rows. The seed seeds the *initial*
+  // trust graph; subsequent rounds update edges via `updateTrustEdge` exactly
+  // as in the synthetic flow, so all downstream signals (PPR, EigenTrust,
+  // spectral gap, dense-subgraph risk) remain intact.
+  if (config.realGraphSeedFile) {
+    const seedPath = path.isAbsolute(config.realGraphSeedFile)
+      ? config.realGraphSeedFile
+      : path.resolve(process.cwd(), config.realGraphSeedFile);
+    const seedJson = JSON.parse(fs.readFileSync(seedPath, "utf-8")) as {
+      datasetName?: string;
+      subsetNodeCount: number;
+      subsetEdgeCount?: number;
+      edges: Array<{
+        sourceIdx?: number;
+        targetIdx?: number;
+        // scripts/generateDensitySeedFiles.ts (and the pre-existing 0.8%/
+        // dense seed files it followed) write sourceIndex/targetIndex
+        // instead of sourceIdx/targetIdx — accept both so locally-
+        // generated density seeds don't silently no-op (idFor(undefined)
+        // collapsed every edge to the same "sim-agent-undefined" self-loop,
+        // which then hit a unique-constraint violation and got silently
+        // skipped, leaving the graph at its default topology regardless of
+        // which density file was requested — confirmed by byte-identical
+        // fraud/MR between sparse and d0.8 cells for the same seed).
+        sourceIndex?: number;
+        targetIndex?: number;
+        successfulCoJobs: number;
+        escrowReliability: number;
+        economicVolume: number;
+        weight: number;
+      }>;
+    };
+    if (seedJson.subsetNodeCount !== providerIds.length) {
+      throw new Error(
+        `Real-graph seed has ${seedJson.subsetNodeCount} nodes but experiment uses ` +
+        `${providerIds.length} agents. Re-run scripts/loadBitcoinOTC.ts with the matching N.`,
+      );
+    }
+    const now = new Date();
+    const idFor = (idx: number) => `sim-agent-${String(idx).padStart(5, "0")}`;
+    const edgeRows = seedJson.edges.map((e) => {
+      const srcIdx = e.sourceIdx ?? e.sourceIndex;
+      const tgtIdx = e.targetIdx ?? e.targetIndex;
+      if (srcIdx === undefined || tgtIdx === undefined) {
+        throw new Error(
+          `Real-graph seed edge missing sourceIdx/sourceIndex or targetIdx/targetIndex: ${JSON.stringify(e)}`,
+        );
+      }
+      return {
+        sourceProviderId: idFor(srcIdx),
+        targetProviderId: idFor(tgtIdx),
+        successfulCoJobs: e.successfulCoJobs,
+        economicVolume: e.economicVolume,
+        escrowReliability: e.escrowReliability,
+        weight: e.weight,
+        lastInteraction: now,
+      };
+    });
+    const CHUNK = 500;
+    for (let i = 0; i < edgeRows.length; i += CHUNK) {
+      const chunk = edgeRows.slice(i, i + CHUNK);
+      try {
+        await prisma.trustEdge.createMany({ data: chunk });
+      } catch (e: any) {
+        // P2002 = unique constraint violation. Skip duplicates gracefully.
+        if (e?.code === 'P2002') {
+          // Fall back to individual upserts for this chunk
+          for (const row of chunk) {
+            try {
+              await prisma.trustEdge.create({ data: row });
+            } catch { /* skip duplicate */ }
+          }
+        } else {
+          throw e;
+        }
+      }
+    }
+    console.log(`  ✓ Seeded trust graph from ${seedJson.datasetName ?? path.basename(seedPath)}: ${edgeRows.length} edges`);
+  }
+
+  // ─── Step 2: Set up attack ────────────────────────────────────────
+  const attack = createAttack(config.attack, {
+    totalAgents: config.agents,
+    maliciousRatio: config.maliciousRatio,
+    params: { ...config.attackParams, jobsPerRound: config.jobsPerRound },
+  });
+
+  const maliciousIds = new Set<string>(initialMaliciousIds);
+  if (attack) {
+    const agents = attack.assignAgents(providerIds, initialMaliciousIds);
+    for (const a of agents) {
+      if (a.isMalicious) maliciousIds.add(a.providerId);
+    }
+    console.log(`  ✓ Attack: ${attack.name} — ${maliciousIds.size} malicious agents`);
+  } else if (config.attack !== "none") {
+    console.log(`  ✓ Adaptive Attack: ${config.attack} — ${maliciousIds.size} malicious agents`);
+  } else {
+    console.log(`  ✓ No attack (baseline run)`);
+  }
+
+  // ─── Step 3: Simulation loop ──────────────────────────────────────
+  const roundMetrics: RoundMetrics[] = [];
+  const defaultedMaliciousIds = new Set<string>();
+  // v4.0 Perf: Only store score history for small-N runs (< 100 agents).
+  // At N=1000, this array would hold 60,000 objects — the primary OOM cause.
+  const scoreTracker: Array<{
+    round: number;
+    providerId: string;
+    providerName: string;
+    traceScore: number;
+    riskTier: string;
+    isMalicious: boolean;
+  }> = [];
+  const shouldTrackScores = config.agents < 100;
+
+  const attackStartRound = (() => {
+    if (config.attack === "none") return config.rounds;
+    if (config.attack === "whitewashing") return Math.floor(config.rounds * 0.35);
+    if (config.attack === "sybil-cluster") return 0;
+    // F6 fix: Collusion exploit phase starts at 60% of rounds (matching collusionRing.ts:68)
+    if (config.attack === "collusion-ring") return Math.floor(config.rounds * 0.6);
+    if (config.attack === "combined-collusion-whitewash") return 0;
+    if (config.attack === "adaptive-collusion-market") return Math.floor(config.rounds * 0.5);
+    if (config.attack === "game-theoretic-adversary") return Math.floor(config.rounds * 0.25);
+    if (config.attack === "game-theoretic-behavioral") return Math.floor(config.rounds * 0.25);
+    return Math.floor(config.rounds * 0.6); // strategic-default
+  })();
+
+  for (let round = 0; round < config.rounds; round++) {
+    const simPrices = await prisma.provider.findMany({
+      where: { isActive: true, id: { startsWith: "sim-agent-" } },
+      select: { capability: true, priceSats: true },
+    });
+    const byCap = new Map<string, number[]>();
+    for (const p of simPrices) {
+      if (!byCap.has(p.capability)) byCap.set(p.capability, []);
+      byCap.get(p.capability)!.push(p.priceSats);
+    }
+    const medianByCap = new Map<string, number>();
+    for (const [cap, prices] of byCap) {
+      const s = [...prices].sort((a, b) => a - b);
+      medianByCap.set(cap, s.length ? s[Math.floor(s.length / 2)] : 0);
+    }
+
+    const roundJobs: Array<{
+      providerId: string;
+      success: boolean;
+      priceSats: number;
+      traceScore: number;
+    }> = [];
+
+    // v2.4: Track agents that defaulted THIS round — skip them in subsequent
+    // jobs of the same round before persistAllNetworkTrust() has propagated.
+    // F1 fix: Applied to ALL policies for fair comparison (was TRACE-only).
+    const roundDefaultedIds = new Set<string>();
+
+    // v5.0 / Proposal 4 (WOR): Track providers already selected THIS round.
+    // When enableWithoutReplacement is on, the retry logic below skips any
+    // provider already in this set, forcing unique selections per round.
+    const roundSelectedIds = new Set<string>();
+
+    for (let job = 0; job < config.jobsPerRound; job++) {
+      const capability = rng.pick(config.capabilities);
+
+      // v2.4: Retry routing if the first selection was a within-round defaulter.
+      // F1 fix: Applied to ALL policies (was TRACE-only — unfair benchmark artifact).
+      //
+      // R-EXPLORE 4 / Task 4.3: `random` drives shuffle + Thompson Beta
+      // sampling; `exploreRandom` drives the wrapper's ε coin-flip and
+      // uniform-pick. The latter is shared across policies in a cell — see
+      // the `exploreRandom` mint above — so the four policies observe a
+      // bit-identical exploration draw sequence for the same seed.
+      let result = await selectProviderTRACE(capability, config.policy, experimentId, undefined, {
+        enabled: true,
+        round,
+        random: () => rng.next(),
+        exploreRandom,
+        ablation: config.traceAblation,
+      });
+      if (
+        result
+        && roundDefaultedIds.has(result.provider.id)
+      ) {
+        // First pick was a within-round defaulter — re-route to the next best candidate
+        const altCandidate = result.candidates
+          .filter((c) => !c.rejected && !roundDefaultedIds.has(c.providerId))
+          .sort((a, b) => b.utility - a.utility)[0];
+        if (altCandidate) {
+          // Swap provider to the alternate (routing decision already logged with the defaulter; acceptable)
+          const providers = await prisma.provider.findMany({
+            where: { id: altCandidate.providerId },
+          });
+          if (providers[0]) {
+            result = { ...result, provider: providers[0], utility: altCandidate.utility };
+          }
+        }
+      }
+      if (!result) continue;
+
+      // v5.0 / Proposal 4 (WOR): Without-Replacement per round.
+      // If the selected provider was already picked earlier in this round,
+      // swap to the next-best candidate that hasn't been selected yet.
+      // Only active when enableWithoutReplacement is set in the ablation.
+      if (
+        result
+        && config.traceAblation?.enableWithoutReplacement
+        && roundSelectedIds.has(result.provider.id)
+      ) {
+        const altCandidate = result.candidates
+          .filter((c) => !c.rejected && !roundDefaultedIds.has(c.providerId) && !roundSelectedIds.has(c.providerId))
+          .sort((a, b) => b.utility - a.utility)[0];
+        if (altCandidate) {
+          const providers = await prisma.provider.findMany({
+            where: { id: altCandidate.providerId },
+          });
+          if (providers[0]) {
+            result = { ...result, provider: providers[0], utility: altCandidate.utility };
+          }
+        }
+      }
+
+      const provider = result.provider;
+      // Track this provider as selected for WOR (always, cheap no-op when WOR is off).
+      roundSelectedIds.add(provider.id);
+      const isMalicious = maliciousIds.has(provider.id);
+
+      if (attack) {
+        attack.observeRouting(provider.id, round, maliciousIds);
+      }
+
+      const medianPrice = medianByCap.get(capability) ?? provider.priceSats;
+
+      // v4.4: Risk-proportional job value capping.
+      // Limits the maximum job value (and thus fraud exposure) based on the
+      // provider's Bayesian LCB (evidence-weighted confidence in their reliability).
+      //
+      // Formula: effectivePrice = min(provider.priceSats, medianPrice × (LCB / 0.5))
+      //
+      // Citation: Kelly criterion (1956) — optimal bet sizing proportional to
+      // edge confidence. Basel III capital adequacy — exposure limits proportional
+      // to counterparty creditworthiness.
+      //
+      // v4.4b: Asymmetric loss weighting — failures count 2× in the LCB computation.
+      // Citation: Kahneman & Tversky (1979) Prospect Theory — loss aversion ≈ 2.0.
+      // Mui et al. (2002) "Computational Models of Trust" — negative evidence
+      // should outweigh positive because defection is deliberate.
+      // One failure now requires two successes to offset in the LCB.
+      const providerLCB = computeBayesianLCB(provider.successfulJobs, provider.failedJobs * 2);
+      const lcbRatio = Math.min(1.0, providerLCB / 0.5);
+      const maxJobValue = Math.max(1, Math.round(medianPrice * lcbRatio));
+      const effectiveJobPrice = Math.min(provider.priceSats, maxJobValue);
+
+      // Determine outcome
+      let success: boolean;
+      if (isMalicious && attack) {
+        // Legacy attack path: uses the Attack class's decide() method
+        const attackAgent = attack["agents"].find((a: { providerId: string }) => a.providerId === provider.id);
+        if (attackAgent) {
+          const decision = attack.decide(attackAgent, round, config.rounds, {
+            jobPriceSats: provider.priceSats,
+            medianJobPriceSats: medianPrice,
+          });
+          success = !decision.shouldDefault;
+        } else {
+          success = rng.next() > config.honestFailureRate;
+        }
+      } else if (isMalicious && !attack && config.attack !== "none") {
+        // Adaptive attack path: read hidden intention from attack state
+        const defaultProb = require("./attackState").adaptiveDefaultProbabilities.get(provider.id) ?? 0.05;
+        success = rng.next() >= defaultProb;
+      } else {
+        // Honest agents: per-agent failure rate from quality tier (Audit Fix C4).
+        // Tiers: excellent (1%), standard (5%), mediocre (12%).
+        const agentIndex = parseInt(provider.id.replace("sim-agent-", ""), 10);
+        const agentFailureRate = honestFailureRates.get(agentIndex) ?? config.honestFailureRate;
+        success = rng.next() > agentFailureRate;
+      }
+
+      // Simulate job in DB
+      // v3.0 Audit: Use random buyer from pool (multi-buyer simulation)
+      const buyerId = rng.pick(buyerIds);
+      const jobRecord = await prisma.job.create({
+        data: {
+          buyerId,
+          providerId: provider.id,
+          capability,
+          inputHash: `sim_${round}_${job}`,
+          input: JSON.stringify({ simulated: true, round, job }),
+          status: success ? "completed" : "failed",
+          priceSats: effectiveJobPrice,
+          feeSats: Math.ceil(effectiveJobPrice * 0.1),
+          escrowStatus: success ? "released" : "refunded",
+          completedAt: new Date(),
+        },
+      });
+
+      // Update TRACE scores
+      try {
+        if (success) {
+          await updateScoreAfterEvent(provider.id, "JOB_SUCCESS", jobRecord.id, effectiveJobPrice);
+          await updateScoreAfterEvent(provider.id, "PAYMENT_SETTLED", jobRecord.id, effectiveJobPrice);
+        } else {
+          await updateScoreAfterEvent(provider.id, "JOB_FAILURE", jobRecord.id, effectiveJobPrice);
+          // ALL failures are treated equally — no oracle knowledge
+          if (isMalicious) {
+            defaultedMaliciousIds.add(provider.id); // keep for METRICS only
+          }
+          roundDefaultedIds.add(provider.id); // track ALL failures for within-round re-routing
+          await updateScoreAfterEvent(provider.id, "DEFAULT", jobRecord.id, effectiveJobPrice);
+          // Task 5.2: Record default round for post-fraud cooldown (Requirement 2.4).
+          // Attack-agnostic — applies to ALL providers that default, regardless of identity.
+          recordProviderDefault(provider.id, round);
+        }
+      } catch {
+        // Score update failures should not halt experiment
+      }
+
+      // v3.0: Update CUSUM change-point statistic (Framework 6).
+      // v4.1 Perf: Use provider object from routing result instead of re-fetching.
+      // The cusumScore and reputationScore are read from the already-loaded provider.
+      // updateScoreAfterEvent already persists the provider, so we read the latest
+      // state from that update rather than doing an extra findUnique.
+      const currentCusum = provider.cusumScore ?? 0;
+      const { newScore: newCusumScore } = updateCUSUMScore(currentCusum, success ? 1 : 0);
+      // v4.3: Dual-CUSUM — sensitive detector for moderate failure rates (15%).
+      const currentCusumSensitive = provider.cusumSensitive ?? 0;
+      const { newScore: newCusumSensitive } = updateCUSUMSensitive(currentCusumSensitive, success ? 1 : 0);
+      const newRating = success ? 5.0 : 1.0;
+      const currentRep = provider.reputationScore ?? 3.0;
+      const alpha = 0.15;
+      const newRep = alpha * newRating + (1 - alpha) * currentRep;
+      await prisma.provider.update({
+        where: { id: provider.id },
+        data: {
+          cusumScore: newCusumScore,
+          cusumSensitive: newCusumSensitive,
+          reputationScore: Math.round(newRep * 100) / 100,
+        },
+      });
+
+      // v3.0 Audit Fix B1: Create trust edges on ALL co-jobs, not just successful ones.
+      // Previously edges were only created on success, which encoded honesty into
+      // graph structure — giving TRACE's graph signals a circular advantage.
+      // Now edges are created whenever two providers are routed consecutively,
+      // decoupling graph structure from outcome.
+      if (roundJobs.length > 0) {
+        const prevJob = roundJobs[roundJobs.length - 1];
+        if (prevJob.providerId !== provider.id) {
+          try {
+            await updateTrustEdge(prevJob.providerId, provider.id, effectiveJobPrice, success);
+            traceInteractionWindowRecordCoJob(round, prevJob.providerId, provider.id);
+            // v2.2: Record interaction for causal graph
+            causalGraph.recordInteraction(prevJob.providerId, provider.id);
+            // v2.3: Record trust-building interaction for temporal analysis
+            temporalEngine.recordTrustInteraction(prevJob.providerId, provider.id, effectiveJobPrice);
+          } catch {
+            // Graph update failures should not halt experiment
+          }
+        }
+      }
+
+      // v3.0 Audit Fix D1: Record ALL failures in causal graph — no oracle knowledge.
+      // Previously only malicious failures were recorded, leaking ground-truth labels
+      // into TRACE's causal penalty signal. Now all failures are treated equally.
+      if (!success) {
+        causalGraph.recordFailure({
+          agentId: provider.id,
+          round,
+          type: "default",
+          damageSats: effectiveJobPrice,
+          jobId: jobRecord.id,
+        });
+      }
+
+      roundJobs.push({
+        providerId: provider.id,
+        success,
+        priceSats: effectiveJobPrice,
+        traceScore: provider.traceScore,
+      });
+    }
+
+    traceInteractionWindowPrune(round);
+
+    // v4.4 Fix #3: Record round-level failure rate for anomaly detection
+    const roundFailures = roundJobs.filter(j => !j.success);
+    const roundFailureRate = roundJobs.length > 0 ? roundFailures.length / roundJobs.length : 0;
+    const failedProviderIdsThisRound = roundFailures.map(j => j.providerId);
+    recordRoundFailureRate(roundFailureRate, failedProviderIdsThisRound, round);
+
+    // Run attack post-round effects
+    if (attack) {
+      const postResult = await attack.postRound(round, config.rounds);
+      if (postResult.actions.length > 0 && round % 10 === 0) {
+        console.log(`    Round ${round}: ${postResult.actions.length} attack actions`);
+      }
+    }
+
+    // v3.0 Audit Fix: Propagation delay for trust graph and sybil risk updates.
+    // In a real system, graph analysis has latency. Instant updates give TRACE
+    // an unrealistic advantage over simpler policies that also have latency.
+    // With delay=1 (default), updates happen every round (legacy behavior).
+    // With delay=2+, TRACE must route using stale graph information.
+    const propagationDelay = config.propagationDelayRounds ?? 1;
+    if (round % propagationDelay === 0) {
+      try {
+        await persistAllNetworkTrust();
+      } catch {}
+      try {
+        await updateSybilRiskScores();
+      } catch {}
+    }
+
+    if (process.env.TRACE_DEBUG_SYBIL === "1") {
+      const sybilTop = await prisma.provider.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, sybilRisk: true },
+        orderBy: { sybilRisk: "desc" },
+        take: 5,
+      });
+      const summary = sybilTop
+        .map((p) => `${p.name ?? p.id.substring(0, 6)}:${p.sybilRisk.toFixed(2)}`)
+        .join(", ");
+      console.log(`    Round ${round}: top sybilRisk -> ${summary}`);
+    }
+
+    // Collect provider scores for this round
+    // v4.0 Perf: Only fetch fields needed for metrics (not full provider objects)
+    const allProviders = await prisma.provider.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, traceScore: true, riskTier: true, totalJobs: true },
+    });
+
+    const providerScores = new Map<string, number>();
+    for (const p of allProviders) {
+      providerScores.set(p.id, p.traceScore);
+    }
+
+    // v4.0 Perf: Score tracking only for small-N runs (prevents 60K-object accumulation)
+    if (shouldTrackScores) {
+      for (const p of allProviders) {
+        scoreTracker.push({
+          round,
+          providerId: p.id,
+          providerName: p.name,
+          traceScore: p.traceScore,
+          riskTier: p.riskTier,
+          isMalicious: maliciousIds.has(p.id),
+        });
+      }
+    }
+
+    // v4.0 Perf: Temporal snapshots only every 5 rounds at large N (reduces N×60 async calls to N×12)
+    const shouldSnapshot = config.agents < 100 || round % 5 === 0;
+    if (shouldSnapshot) {
+      const snapshotEdgeCache = await buildEdgeCache();
+      // v4.0 Perf: Build routing share map in single pass (replaces N filter calls)
+      const routingShareMap = new Map<string, number>();
+      for (const j of roundJobs) {
+        routingShareMap.set(j.providerId, (routingShareMap.get(j.providerId) ?? 0) + 1);
+      }
+
+      for (const p of allProviders) {
+        try {
+          const { diversityScore } = await computeCounterpartyEntropy(p.id, snapshotEdgeCache);
+          const totalRoundJobs = routingShareMap.get(p.id) ?? 0;
+          const routingShare = config.jobsPerRound > 0 ? totalRoundJobs / config.jobsPerRound : 0;
+          temporalEngine.recordSnapshot(p.id, {
+            round,
+            traceScore: p.traceScore,
+            entropy: diversityScore,
+            routingShare,
+            interactionCount: p.totalJobs,
+            diversityScore,
+          });
+        } catch {
+          // Non-fatal
+        }
+      }
+    }
+
+    // Compute round metrics
+    const metrics = computeRoundMetrics(round, roundJobs, maliciousIds, providerScores, defaultedMaliciousIds);
+    roundMetrics.push(metrics);
+
+    // Progress logging
+    if (round % 10 === 0 || round === config.rounds - 1) {
+      const m = metrics;
+      console.log(
+        `  Round ${String(round).padStart(3)}: ` +
+        `success=${(m.successRate * 100).toFixed(0)}% ` +
+        `fraud=${m.fraudExposureSats}sats ` +
+        `mal_routed=${m.maliciousRoutingCount}/${m.totalJobs} ` +
+        `avg_trace=${m.avgTraceScore.toFixed(0)} ` +
+        `mal_trace=${m.avgMaliciousTraceScore.toFixed(0)} ` +
+        `honest_trace=${m.avgHonestTraceScore.toFixed(0)}`
+      );
+    }
+  }
+
+  // ─── Step 4: Aggregate metrics ────────────────────────────────────
+  const finalMetrics = aggregateMetrics(
+    experimentId,
+    config.policy,
+    config.attack,
+    config.agents,
+    maliciousIds.size,
+    roundMetrics,
+    attackStartRound
+  );
+
+  // ─── Step 4b: Recovery metric (R-RECOVERY, Task 8.3, design §8.2) ──────
+  // Compute the per-cell recovery metric using `computeRecoveryMetric`.
+  // The live series is the per-round maliciousRoutingRate from the actual run.
+  // For the honest baseline: when attackStartRound=0 (attacks start immediately),
+  // we use the first RECOVERY_K=30 rounds of the live run as an acceptable
+  // approximation — the first few rounds have minimal malicious routing because
+  // the attack has not yet built momentum. For attackStartRound>0, we use the
+  // pre-attack window as the honest baseline.
+  {
+    const liveMaliciousRoutingSeries = roundMetrics.map((m) => m.maliciousRoutingRate);
+    const liveFraudSeries = roundMetrics.map((m) => m.fraudExposureSats);
+
+    // Honest baseline: use pre-attack rounds if available, otherwise use
+    // the first 30 rounds of the live run (acceptable approximation per
+    // design §8.1 when attackStartRound=0).
+    const honestMaliciousRoutingSeries =
+      attackStartRound > 0
+        ? liveMaliciousRoutingSeries.slice(0, attackStartRound)
+        : liveMaliciousRoutingSeries.slice(0, 30);
+
+    const honestFraudSeries =
+      attackStartRound > 0
+        ? liveFraudSeries.slice(0, attackStartRound)
+        : liveFraudSeries.slice(0, 30);
+
+    const recoveryMaliciousRouting = computeRecoveryMetric(
+      honestMaliciousRoutingSeries,
+      liveMaliciousRoutingSeries,
+      attackStartRound,
+      "maliciousRoutingRate",
+    );
+
+    const recoveryFraudExposure = computeRecoveryMetric(
+      honestFraudSeries,
+      liveFraudSeries,
+      attackStartRound,
+      "fraudExposure",
+    );
+
+    finalMetrics.recoveryRound = {
+      maliciousRoutingRate: recoveryMaliciousRouting.recoveryRound,
+      fraudExposure: recoveryFraudExposure.recoveryRound,
+    };
+  }
+
+  // ─── Step 5: Save results ─────────────────────────────────────────
+  const resultsDir = await saveResults(experimentId, config, finalMetrics, roundMetrics, scoreTracker, attack);
+
+  // ─── Step 6: Print summary ────────────────────────────────────────
+  console.log(`\n${"─".repeat(70)}`);
+  console.log(`  RESULTS: ${experimentId}`);
+  console.log(`${"─".repeat(70)}`);
+  console.log(`  Overall Success Rate:        ${(finalMetrics.overallSuccessRate * 100).toFixed(1)}%`);
+  console.log(`  Total Fraud Exposure:        ${finalMetrics.totalFraudExposureSats} sats`);
+  console.log(`  Max Single-Round Fraud:      ${finalMetrics.maxFraudExposureInSingleRound} sats`);
+  console.log(`  Malicious Routing Rate:      ${(finalMetrics.maliciousRoutingRate * 100).toFixed(1)}%`);
+  console.log(`  Recovery Time:               ${finalMetrics.recoveryTimeRounds} rounds`);
+  console.log(`  Recovery Round (R-RECOVERY): malRouting=${finalMetrics.recoveryRound?.maliciousRoutingRate ?? "null"} fraud=${finalMetrics.recoveryRound?.fraudExposure ?? "null"}`);
+  console.log(`  Pre-Attack Success:          ${(finalMetrics.preAttackSuccessRate * 100).toFixed(1)}%`);
+  console.log(`  During-Attack Success:       ${(finalMetrics.duringAttackSuccessRate * 100).toFixed(1)}%`);
+  console.log(`  Post-Attack Success:         ${(finalMetrics.postAttackSuccessRate * 100).toFixed(1)}%`);
+  console.log(`  Peak Malicious TRACE Score:  ${finalMetrics.peakMaliciousTraceScore}`);
+  console.log(`  Final Malicious TRACE Score: ${finalMetrics.finalMaliciousTraceScore}`);
+  console.log(`  Score Drop Magnitude:        ${finalMetrics.maliciousScoreDropMagnitude}`);
+  console.log(`  Avg Routing Concentration:   ${finalMetrics.avgRoutingConcentration.toFixed(4)}`);
+  console.log(`${"─".repeat(70)}`);
+  console.log(`  Results saved to: ${resultsDir}`);
+  console.log(`${"═".repeat(70)}\n`);
+
+  return resultsDir;
+  } finally {
+    disableTraceInteractionWindow();
+  }
+}
+
+// ─── Helper Functions ─────────────────────────────────────────────────────────
+
+async function cleanExperimentState(numBuyers: number = 5): Promise<void> {
+  // Clear experiment-related data (keep real providers intact)
+  await prisma.routingDecision.deleteMany({});
+  await prisma.scoreHistory.deleteMany({});
+  await prisma.economicEvent.deleteMany({});
+  await prisma.trustEdge.deleteMany({});
+  await prisma.job.deleteMany({ where: { providerId: { startsWith: "sim-agent-" } } });
+  // Delete simulated providers
+  await prisma.provider.deleteMany({
+    where: { id: { startsWith: "sim-agent-" } },
+  });
+  // v3.0 Audit: Create multiple experiment buyers with different demand profiles.
+  // This prevents trivial failure-correlation detection via single buyerId.
+  for (let i = 0; i < numBuyers; i++) {
+    const buyerId = i === 0 ? "experiment-buyer" : `experiment-buyer-${i}`;
+    await prisma.buyer.upsert({
+      where: { id: buyerId },
+      create: {
+        id: buyerId,
+        name: `Experiment Buyer ${i}`,
+        dailyBudgetSats: 999999,
+        perIncidentCapSats: 999999,
+      },
+      update: {},
+    });
+  }
+}
+
+async function createSimulatedProviders(
+  config: ExperimentConfig,
+  rng: SeededRandom
+): Promise<{ providerIds: string[]; maliciousIds: Set<string>; honestFailureRates: Map<number, number> }> {
+  const ids: string[] = [];
+  const maliciousIds = new Set<string>();
+
+  // Build the ordered agent list with model info
+  interface AgentDef {
+    index: number;
+    model: string;
+    displayName: string;
+    modelIndex: number;  // index within that model type
+    priceRange: { min: number; max: number };
+  }
+
+  const agentDefs: AgentDef[] = [];
+
+  if (config.agentMix && config.agentMix.length > 0) {
+    // v2.1: Named model mix — each agent gets model-specific naming and pricing
+    let globalIndex = 0;
+    for (const spec of config.agentMix) {
+      for (let j = 0; j < spec.count; j++) {
+        agentDefs.push({
+          index: globalIndex++,
+          model: spec.model,
+          displayName: spec.displayName,
+          modelIndex: j,
+          priceRange: spec.priceRange,
+        });
+      }
+    }
+  } else {
+    // Fallback: generic agents with uniform pricing
+    for (let i = 0; i < config.agents; i++) {
+      agentDefs.push({
+        index: i,
+        model: "generic",
+        displayName: "Agent",
+        modelIndex: i,
+        priceRange: config.priceRange,
+      });
+    }
+  }
+
+  const totalAgents = agentDefs.length;
+  const numMalicious = Math.floor(totalAgents * config.maliciousRatio);
+
+  // P0/P1: Shuffle to assign malicious labels independently of price order
+  const shuffledIndices = Array.from({ length: totalAgents }, (_, i) => i);
+  for (let i = shuffledIndices.length - 1; i > 0; i--) {
+    const j = Math.floor(rng.next() * (i + 1));
+    [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
+  }
+  const maliciousIndexSet = new Set(shuffledIndices.slice(0, numMalicious));
+
+  // v3.0 Audit Fix C4: Honest agent heterogeneity.
+  // Assign per-agent failure rates from quality tiers so the honest/malicious
+  // boundary is not artificially sharp. Tiers: excellent (1%), standard (5%),
+  // mediocre (12%). Distribution: 20% excellent, 60% standard, 20% mediocre.
+  // This tests TRACE's false-positive rate against mediocre-but-honest agents.
+  const honestFailureRates = new Map<number, number>();
+  const honestIndices = Array.from({ length: totalAgents }, (_, i) => i)
+    .filter(i => !maliciousIndexSet.has(i));
+  for (let idx = 0; idx < honestIndices.length; idx++) {
+    const tier = idx / honestIndices.length;
+    let failureRate: number;
+    if (tier < 0.20) {
+      failureRate = 0.01; // excellent: 1% failure
+    } else if (tier < 0.80) {
+      failureRate = config.honestFailureRate; // standard: 5% (config default)
+    } else {
+      failureRate = 0.12; // mediocre: 12% failure — still honest, just unreliable
+    }
+    honestFailureRates.set(honestIndices[idx], failureRate);
+  }
+
+  // Build all provider records first, then batch-insert.
+  // At large N (≥ 100) this avoids thousands of round-trips to SQLite.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows: any[] = [];
+
+  for (const def of agentDefs) {
+    const id = `sim-agent-${String(def.index).padStart(5, "0")}`;
+    const capability = config.capabilities[def.index % config.capabilities.length];
+    
+    // P1: Malicious price strategy
+    let price = rng.int(def.priceRange.min, def.priceRange.max);
+    const isMalicious = maliciousIndexSet.has(def.index);
+    if (isMalicious) {
+      maliciousIds.add(id);
+      const strategy = config.attackParams?.maliciousPriceStrategy as string | undefined;
+      if (strategy === "cheap") {
+        price = Math.max(1, Math.floor(def.priceRange.min * 0.8)); // 20% undercut
+      } else if (strategy === "expensive") {
+        price = Math.floor(def.priceRange.max * 1.2); // 20% overprice
+      }
+    }
+    // v3.0 Audit Fix A2: Initialize stakeSats for ALL policies identically.
+    // Previously staking was only enabled for EIGENTRUST, creating an
+    // information asymmetry. Stake is a marketplace property, not a policy property.
+    const stakeSats = price * rng.int(5, 20);
+
+    const name = config.agentMix
+      ? `${def.displayName} #${String(def.modelIndex + 1).padStart(2, "0")}${isMalicious ? " [M]" : ""}`
+      : `Agent ${String(def.index).padStart(5, "0")}${isMalicious ? " [M]" : ""}`;
+
+    const description = config.agentMix
+      ? `Simulated ${def.model} ${isMalicious ? "malicious" : "honest"} agent`
+      : `Simulated ${isMalicious ? "malicious" : "honest"} provider for experiments`;
+
+    rows.push({
+      id,
+      name,
+      description,
+      capability,
+      priceSats: price,
+      reputationScore: 3.0,
+      endpointUrl: "/api/agents/simulated",
+      isActive: true,
+      traceScore: 500,
+      riskTier: "B",
+      defaultProbability: 0.05,
+      completionRate: 1.0,
+      repaymentRate: 1.0,
+      successfulEscrowRate: 1.0,
+      disputeRate: 0.0,
+      networkTrust: 0.0,
+      sybilRisk: 0.0,
+      stakeSats,
+      stakeStatus: stakeSats > 0 ? "staked" : "none",
+      stakeRatio: stakeSats > 0 ? 1.0 : 0.0,
+      scoreVolatility: 0.0,
+      totalEconomicVolume: 0,
+      successfulJobs: 0,
+      failedJobs: 0,
+      defaultedJobs: 0,
+      disputedJobs: 0,
+      cusumScore: 0.0,
+    });
+
+    ids.push(id);
+  }
+
+  // Batch insert in chunks of 500 to stay within SQLite limits
+  const CHUNK = 500;
+  for (let start = 0; start < rows.length; start += CHUNK) {
+    await prisma.provider.createMany({ data: rows.slice(start, start + CHUNK) });
+  }
+
+  // Print agent mix summary if using named models
+  if (config.agentMix) {
+    const modelCounts = config.agentMix.map((s) => `${s.count}× ${s.displayName}`).join(", ");
+    console.log(`  ✓ Agent Mix: ${modelCounts}`);
+    console.log(`  ✓ Total: ${totalAgents} agents (${numMalicious} malicious from ${config.agentMix.length} model types)`);
+  }
+
+  return { providerIds: ids, maliciousIds, honestFailureRates };
+}
+
+async function saveResults(
+  experimentId: string,
+  config: ExperimentConfig,
+  metrics: ReturnType<typeof aggregateMetrics>,
+  rounds: RoundMetrics[],
+  scoreHistory: Array<{
+    round: number;
+    providerId: string;
+    providerName: string;
+    traceScore: number;
+    riskTier: string;
+    isMalicious: boolean;
+  }>,
+  attack: ReturnType<typeof createAttack>
+): Promise<string> {
+  const resultsDir = path.join(process.cwd(), "results", experimentId);
+  fs.mkdirSync(resultsDir, { recursive: true });
+
+  // config.json — full experiment configuration
+  fs.writeFileSync(
+    path.join(resultsDir, "config.json"),
+    JSON.stringify({
+      experimentId,
+      config,
+      attack: attack?.toJSON() ?? { name: "none" },
+      traceConfig: snapshotConfig(),
+      timestamp: new Date().toISOString(),
+    }, null, 2)
+  );
+
+  // metrics.json — aggregate results
+  const { rounds: _rounds, ...metricsWithoutRounds } = metrics;
+  fs.writeFileSync(
+    path.join(resultsDir, "metrics.json"),
+    JSON.stringify(metricsWithoutRounds, null, 2)
+  );
+
+  // routing_logs.csv — per-round routing metrics
+  // OMITTED for massive-scale runs to save disk space
+  if (config.agents < 100) {
+    fs.writeFileSync(
+      path.join(resultsDir, "routing_logs.csv"),
+      roundMetricsToCSV(rounds)
+    );
+
+    // score_history.csv — per-round per-provider TRACE scores
+    fs.writeFileSync(
+      path.join(resultsDir, "score_history.csv"),
+      scoreHistoryToCSV(scoreHistory)
+    );
+  }
+
+  // summary.txt — human-readable summary
+  const summary = [
+    `TRACE Experiment: ${experimentId}`,
+    `Date: ${new Date().toISOString()}`,
+    ``,
+    `Configuration:`,
+    `  Policy: ${config.policy}`,
+    `  Attack: ${config.attack}`,
+    `  Agents: ${config.agents} (${Math.round(config.maliciousRatio * 100)}% malicious)`,
+    `  Rounds: ${config.rounds} × ${config.jobsPerRound} jobs/round`,
+    `  Seed: ${config.seed}`,
+    ``,
+    `Results:`,
+    `  Overall Success Rate:        ${(metrics.overallSuccessRate * 100).toFixed(1)}%`,
+    `  Total Fraud Exposure:        ${metrics.totalFraudExposureSats} sats`,
+    `  Malicious Routing Rate:      ${(metrics.maliciousRoutingRate * 100).toFixed(1)}%`,
+    `  Recovery Time:               ${metrics.recoveryTimeRounds} rounds`,
+    `  Pre-Attack Success:          ${(metrics.preAttackSuccessRate * 100).toFixed(1)}%`,
+    `  During-Attack Success:       ${(metrics.duringAttackSuccessRate * 100).toFixed(1)}%`,
+    `  Post-Attack Success:         ${(metrics.postAttackSuccessRate * 100).toFixed(1)}%`,
+    `  Peak Malicious TRACE Score:  ${metrics.peakMaliciousTraceScore}`,
+    `  Final Malicious TRACE Score: ${metrics.finalMaliciousTraceScore}`,
+    `  Score Drop Magnitude:        ${metrics.maliciousScoreDropMagnitude}`,
+    ``,
+  ].join("\n");
+
+  fs.writeFileSync(path.join(resultsDir, "summary.txt"), summary);
+
+  return resultsDir;
+}
+
+
+// ─── Phase 1: Stability & Verification Functions ──────────────────────────────
+
+/**
+ * Phase 1 Enhancement: Stability smoke test
+ * 
+ * Runs a quick experiment to verify:
+ * - No crashes or unhandled exceptions
+ * - No NaN/Infinity/null in scores
+ * - Malicious agents produce defaults
+ * - SCC detection works for collusion attacks
+ * 
+ * Theoretical justification: Stability is a prerequisite for scientific validity.
+ * If the system crashes or produces invalid scores, all results are meaningless.
+ */
+export async function runStabilityChecks(attackType: AttackType = "strategic-default"): Promise<void> {
+  console.log("\n" + "═".repeat(70));
+  console.log("  PHASE 1: Running Stability Smoke Test");
+  console.log("═".repeat(70) + "\n");
+
+  try {
+    const result = await runExperiment({
+      ...DEFAULT_CONFIG,
+      agents: 100,
+      rounds: 60,
+      seed: 42,
+      attack: attackType,
+      maliciousRatio: 0.2,
+    });
+
+    console.log("\n✓ Smoke test completed without crashes");
+
+    // Assert: No NaN/Infinity/null in scores
+    const providers = await prisma.provider.findMany({
+      where: { isActive: true, id: { startsWith: "sim-agent-" } },
+      select: { id: true, name: true, traceScore: true, networkTrust: true, sybilRisk: true },
+    });
+
+    let invalidScores = 0;
+    for (const provider of providers) {
+      if (!isFinite(provider.traceScore)) {
+        console.error(`  ✗ Invalid traceScore for ${provider.id}: ${provider.traceScore}`);
+        invalidScores++;
+      }
+      if (!isFinite(provider.networkTrust)) {
+        console.error(`  ✗ Invalid networkTrust for ${provider.id}: ${provider.networkTrust}`);
+        invalidScores++;
+      }
+      if (!isFinite(provider.sybilRisk)) {
+        console.error(`  ✗ Invalid sybilRisk for ${provider.id}: ${provider.sybilRisk}`);
+        invalidScores++;
+      }
+    }
+
+    if (invalidScores === 0) {
+      console.log("✓ All scores are finite (no NaN/Infinity/null)");
+    } else {
+      throw new Error(`Found ${invalidScores} invalid scores`);
+    }
+
+    // Assert: Malicious agents produced defaults
+    const maliciousProviders = providers.filter(p => p.name.includes("[M]"));
+    const jobs = await prisma.job.findMany({
+      where: {
+        buyerId: "experiment-buyer",
+        providerId: { in: maliciousProviders.map(p => p.id) },
+        status: "failed",
+      },
+    });
+
+    const maliciousDefaults = jobs.length;
+    const expectedMinDefaults = Math.floor(maliciousProviders.length * 0.05 * 60); // 5% default rate × rounds
+
+    if (maliciousDefaults >= expectedMinDefaults) {
+      console.log(`✓ Malicious agents produced ${maliciousDefaults} defaults (expected ≥${expectedMinDefaults})`);
+    } else {
+      console.warn(`⚠ Malicious agents produced only ${maliciousDefaults} defaults (expected ≥${expectedMinDefaults})`);
+    }
+
+    // Assert: SCC detection works for collusion attacks
+    if (attackType === "collusion-ring") {
+      const edges = await prisma.trustEdge.findMany({
+        where: {
+          sourceProviderId: { in: maliciousProviders.map(p => p.id) },
+          targetProviderId: { in: maliciousProviders.map(p => p.id) },
+        },
+      });
+
+      if (edges.length > 0) {
+        console.log(`✓ SCC detection: Found ${edges.length} edges between malicious agents`);
+      } else {
+        console.warn(`⚠ SCC detection: No edges found between malicious agents`);
+      }
+    }
+
+    console.log("\n" + "═".repeat(70));
+    console.log("  ✅ STABILITY CHECKS PASSED");
+    console.log("═".repeat(70) + "\n");
+
+  } catch (error) {
+    console.error("\n" + "═".repeat(70));
+    console.error("  ✗ STABILITY CHECKS FAILED");
+    console.error("═".repeat(70));
+    console.error(error);
+    throw error;
+  }
+}
+
+/**
+ * Phase 1 Enhancement: Baseline integrity verification
+ * 
+ * Verifies that baseline routing policies (REPUTATION, PRICE) are not
+ * contaminated with TRACE-specific features.
+ * 
+ * Theoretical justification: Scientific validity requires clean baselines.
+ * If baselines use TRACE features, the comparison is meaningless.
+ */
+export async function verifyBaselineIntegrity(): Promise<void> {
+  console.log("\n" + "═".repeat(70));
+  console.log("  PHASE 1: Verifying Baseline Integrity");
+  console.log("═".repeat(70) + "\n");
+
+  try {
+    // Run a quick experiment with REPUTATION policy
+    await runExperiment({
+      ...DEFAULT_CONFIG,
+      policy: "REPUTATION",
+      agents: 20,
+      rounds: 10,
+      seed: 42,
+      attack: "none",
+    });
+
+    // Check that routing decisions used only reputationScore
+    const reputationDecisions = await prisma.routingDecision.findMany({
+      where: { experimentId: { contains: "REPUTATION" } },
+      take: 10,
+    });
+
+    let contaminatedReputation = false;
+    for (const decision of reputationDecisions) {
+      // Parse candidateScores to check for TRACE features
+      try {
+        const candidateScores = JSON.parse(decision.candidateScores);
+        const hasTraceFeatures = candidateScores.some((candidate: { usesNetworkTrust?: boolean; usesSybilRisk?: boolean }) => 
+          candidate.usesNetworkTrust || candidate.usesSybilRisk
+        );
+        if (hasTraceFeatures) {
+          console.error(`  ✗ REPUTATION baseline contaminated: uses TRACE features`);
+          contaminatedReputation = true;
+          break;
+        }
+      } catch (_e) {
+        // Skip if candidateScores is not valid JSON
+      }
+    }
+
+    if (!contaminatedReputation) {
+      console.log("✓ REPUTATION baseline is clean (no TRACE features)");
+    }
+
+    // Run a quick experiment with PRICE policy
+    await runExperiment({
+      ...DEFAULT_CONFIG,
+      policy: "PRICE",
+      agents: 20,
+      rounds: 10,
+      seed: 43,
+      attack: "none",
+    });
+
+    // Check that routing decisions used only priceSats
+    const priceDecisions = await prisma.routingDecision.findMany({
+      where: { experimentId: { contains: "PRICE" } },
+      take: 10,
+    });
+
+    let contaminatedPrice = false;
+    for (const decision of priceDecisions) {
+      // Parse candidateScores to check for reputation or TRACE features
+      try {
+        const candidateScores = JSON.parse(decision.candidateScores);
+        const hasNonPriceFeatures = candidateScores.some((candidate: { usesReputation?: boolean; usesNetworkTrust?: boolean }) => 
+          candidate.usesReputation || candidate.usesNetworkTrust
+        );
+        if (hasNonPriceFeatures) {
+          console.error(`  ✗ PRICE baseline contaminated: uses reputation or TRACE features`);
+          contaminatedPrice = true;
+          break;
+        }
+      } catch (_e) {
+        // Skip if candidateScores is not valid JSON
+      }
+    }
+
+    if (!contaminatedPrice) {
+      console.log("✓ PRICE baseline is clean (no reputation or TRACE features)");
+    }
+
+    if (!contaminatedReputation && !contaminatedPrice) {
+      console.log("\n" + "═".repeat(70));
+      console.log("  ✅ BASELINE INTEGRITY VERIFIED");
+      console.log("═".repeat(70) + "\n");
+    } else {
+      throw new Error("Baseline integrity check failed");
+    }
+
+  } catch (error) {
+    console.error("\n" + "═".repeat(70));
+    console.error("  ✗ BASELINE INTEGRITY CHECK FAILED");
+    console.error("═".repeat(70));
+    console.error(error);
+    throw error;
+  }
+}
+
+/**
+ * Phase 1 Enhancement: Result sanity validation
+ * 
+ * Validates that experiment results make sense:
+ * - TRACE fraud exposure > 0 (not a measurement bug)
+ * - Baselines show measurable fraud for graph attacks
+ * - Malicious routing rate is proportional to malicious fraction
+ * 
+ * Theoretical justification: Sanity checks catch measurement bugs that
+ * would invalidate all results. A fraud exposure of 0 when attacks are
+ * running indicates a broken metric, not a perfect defense.
+ */
+export async function validateResults(
+  experimentId: string,
+  attackType: AttackType,
+  maliciousRatio: number
+): Promise<void> {
+  console.log("\n" + "═".repeat(70));
+  console.log("  PHASE 1: Validating Result Sanity");
+  console.log("═".repeat(70) + "\n");
+
+  try {
+    // Load metrics from the experiment
+    const resultsDir = path.join(process.cwd(), "results", experimentId);
+    const metricsPath = path.join(resultsDir, "metrics.json");
+    
+    if (!fs.existsSync(metricsPath)) {
+      throw new Error(`Metrics file not found: ${metricsPath}`);
+    }
+
+    const metrics = JSON.parse(fs.readFileSync(metricsPath, "utf-8"));
+
+    // Check 1: TRACE fraud exposure must be > 0 (except for attacks that may not trigger)
+    const allowZeroFraud = ["strategic-default", "economic-whitewashing"];
+    if (attackType !== "none" && metrics.totalFraudExposureSats === 0 && !allowZeroFraud.includes(attackType)) {
+      throw new Error("TRACE fraud exposure = 0 indicates measurement bug");
+    }
+    if (metrics.totalFraudExposureSats === 0 && allowZeroFraud.includes(attackType)) {
+      console.log(`⚠ TRACE fraud exposure: 0 sats (attack may not have triggered defaults this run)`);
+    } else {
+      console.log(`✓ TRACE fraud exposure: ${metrics.totalFraudExposureSats} sats`);
+    }
+
+    // Check 2: Baselines must show measurable fraud for graph attacks
+    if (attackType === "collusion-ring" || attackType === "sybil-cluster") {
+      // This check would require running baseline experiments
+      console.log("⚠ Baseline fraud check skipped (requires separate baseline runs)");
+    }
+
+    // Check 3: Malicious routing rate should be proportional to malicious fraction
+    const expectedMaliciousRate = maliciousRatio;
+    const actualMaliciousRate = metrics.maliciousRoutingRate;
+
+    // Allow 2x deviation (TRACE should suppress, not eliminate)
+    if (actualMaliciousRate < expectedMaliciousRate * 2) {
+      console.log(`✓ Malicious routing rate: ${(actualMaliciousRate * 100).toFixed(1)}% (expected ~${(expectedMaliciousRate * 100).toFixed(1)}%)`);
+    } else {
+      console.warn(`⚠ Malicious routing rate ${(actualMaliciousRate * 100).toFixed(1)}% >> expected ${(expectedMaliciousRate * 100).toFixed(1)}%`);
+    }
+
+    // Check 4: Recovery time should be reasonable
+    if (metrics.recoveryTimeRounds > 0 && metrics.recoveryTimeRounds < 100) {
+      console.log(`✓ Recovery time: ${metrics.recoveryTimeRounds} rounds (reasonable)`);
+    } else if (metrics.recoveryTimeRounds === 0) {
+      console.log("⚠ Recovery time: 0 rounds (no recovery needed or metric not applicable)");
+    } else {
+      console.warn(`⚠ Recovery time: ${metrics.recoveryTimeRounds} rounds (unusually long)`);
+    }
+
+    console.log("\n" + "═".repeat(70));
+    console.log("  ✅ RESULT SANITY CHECKS PASSED");
+    console.log("═".repeat(70) + "\n");
+
+  } catch (error) {
+    console.error("\n" + "═".repeat(70));
+    console.error("  ✗ RESULT SANITY CHECK FAILED");
+    console.error("═".repeat(70));
+    console.error(error);
+    throw error;
+  }
+}

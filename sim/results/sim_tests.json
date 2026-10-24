@@ -1,0 +1,237 @@
+{
+  "passed": 52,
+  "failed": 0,
+  "results": [
+    {
+      "name": "tier_lcb95_equals_fork_computeBayesianLCB",
+      "pass": true,
+      "detail": "maxDiff=0"
+    },
+    {
+      "name": "tier_threshold_is_lcb_3_0",
+      "pass": true,
+      "detail": "thr=0.2504542304090258"
+    },
+    {
+      "name": "tier_cold_start_unproven",
+      "pass": true
+    },
+    {
+      "name": "tier_2_0_unproven",
+      "pass": true
+    },
+    {
+      "name": "tier_3_0_proven_boundary",
+      "pass": true
+    },
+    {
+      "name": "tier_flag_beats_evidence",
+      "pass": true
+    },
+    {
+      "name": "tier_3_1_unproven",
+      "pass": true
+    },
+    {
+      "name": "sim_max_sybil_matches_router",
+      "pass": true,
+      "detail": "router=0.5"
+    },
+    {
+      "name": "sim_flag_strict_gt",
+      "pass": true
+    },
+    {
+      "name": "sim_flag_sybil_failure",
+      "pass": true
+    },
+    {
+      "name": "sim_tier_flagged",
+      "pass": true
+    },
+    {
+      "name": "decision_code_adapter",
+      "pass": true
+    },
+    {
+      "name": "all_test_cells_ran",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "runnerHx_bit_identical_eq1",
+      "pass": true,
+      "detail": "d1c6cc1f954c0d90,ece0f0935fa5c497,a968daa5804d08bc,32d65aa3d235185d,9bb8bba7044e46d7 vs d1c6cc1f954c0d90,ece0f0935fa5c497,a968daa5804d08bc,32d65aa3d235185d,9bb8bba7044e46d7"
+    },
+    {
+      "name": "runnerHx_bit_identical_eq2",
+      "pass": true,
+      "detail": "c0657202b7110d4e,47d5664d12a94bfe,5111da68084e7781,beb87aa0923bb8db,5c580d663d37a14b vs c0657202b7110d4e,47d5664d12a94bfe,5111da68084e7781,beb87aa0923bb8db,5c580d663d37a14b"
+    },
+    {
+      "name": "runnerHx_bit_identical_eq3",
+      "pass": true,
+      "detail": "70073d9b1223080b,4a3b42acae5b9019,f1c4acbf5ade26a0,578a61c5ece34192,9cacc0045a13b14d vs 70073d9b1223080b,4a3b42acae5b9019,f1c4acbf5ade26a0,578a61c5ece34192,9cacc0045a13b14d"
+    },
+    {
+      "name": "runnerHx_bit_identical_eq4",
+      "pass": true,
+      "detail": "95c9d655b478ac00,387b34eb076a793d,6a23ea2da6bb8431,3b1c14b2973816ff,7c969c2519f5a2cb vs 95c9d655b478ac00,387b34eb076a793d,6a23ea2da6bb8431,3b1c14b2973816ff,7c969c2519f5a2cb"
+    },
+    {
+      "name": "runnerHx_bit_identical_eq5",
+      "pass": true,
+      "detail": "1be8a6ce7f3f91e2 vs 1be8a6ce7f3f91e2"
+    },
+    {
+      "name": "eb0_never_explores_strategic-default",
+      "pass": true
+    },
+    {
+      "name": "eb_budget_eb0|strategic-default",
+      "pass": true,
+      "detail": "explore=0 total=1886 B=0%"
+    },
+    {
+      "name": "eb_no_flagged_pick_eb0|strategic-default",
+      "pass": true
+    },
+    {
+      "name": "eb_price_match_eb0|strategic-default",
+      "pass": true
+    },
+    {
+      "name": "eb_budget_eb10|strategic-default",
+      "pass": true,
+      "detail": "explore=153 total=1631 B=10%"
+    },
+    {
+      "name": "eb_no_flagged_pick_eb10|strategic-default",
+      "pass": true
+    },
+    {
+      "name": "eb_price_match_eb10|strategic-default",
+      "pass": true
+    },
+    {
+      "name": "eb10_explores_strategic-default",
+      "pass": true,
+      "detail": "exploreJobs=90"
+    },
+    {
+      "name": "eb0_never_explores_collusion-ring",
+      "pass": true
+    },
+    {
+      "name": "eb_budget_eb0|collusion-ring",
+      "pass": true,
+      "detail": "explore=0 total=2197 B=0%"
+    },
+    {
+      "name": "eb_no_flagged_pick_eb0|collusion-ring",
+      "pass": true
+    },
+    {
+      "name": "eb_price_match_eb0|collusion-ring",
+      "pass": true
+    },
+    {
+      "name": "eb_budget_eb10|collusion-ring",
+      "pass": true,
+      "detail": "explore=136 total=1459 B=10%"
+    },
+    {
+      "name": "eb_no_flagged_pick_eb10|collusion-ring",
+      "pass": true
+    },
+    {
+      "name": "eb_price_match_eb10|collusion-ring",
+      "pass": true
+    },
+    {
+      "name": "eb10_explores_collusion-ring",
+      "pass": true,
+      "detail": "exploreJobs=87"
+    },
+    {
+      "name": "eb0_never_explores_sybil-cluster",
+      "pass": true
+    },
+    {
+      "name": "eb_budget_eb0|sybil-cluster",
+      "pass": true,
+      "detail": "explore=0 total=2013 B=0%"
+    },
+    {
+      "name": "eb_no_flagged_pick_eb0|sybil-cluster",
+      "pass": true
+    },
+    {
+      "name": "eb_price_match_eb0|sybil-cluster",
+      "pass": true
+    },
+    {
+      "name": "eb_budget_eb10|sybil-cluster",
+      "pass": true,
+      "detail": "explore=136 total=1528 B=10%"
+    },
+    {
+      "name": "eb_no_flagged_pick_eb10|sybil-cluster",
+      "pass": true
+    },
+    {
+      "name": "eb_price_match_eb10|sybil-cluster",
+      "pass": true
+    },
+    {
+      "name": "eb10_explores_sybil-cluster",
+      "pass": true,
+      "detail": "exploreJobs=88"
+    },
+    {
+      "name": "eb0_never_explores_game-theoretic-adversary",
+      "pass": true
+    },
+    {
+      "name": "eb_budget_eb0|game-theoretic-adversary",
+      "pass": true,
+      "detail": "explore=0 total=1857 B=0%"
+    },
+    {
+      "name": "eb_no_flagged_pick_eb0|game-theoretic-adversary",
+      "pass": true
+    },
+    {
+      "name": "eb_price_match_eb0|game-theoretic-adversary",
+      "pass": true
+    },
+    {
+      "name": "eb_budget_eb10|game-theoretic-adversary",
+      "pass": true,
+      "detail": "explore=142 total=1535 B=10%"
+    },
+    {
+      "name": "eb_no_flagged_pick_eb10|game-theoretic-adversary",
+      "pass": true
+    },
+    {
+      "name": "eb_price_match_eb10|game-theoretic-adversary",
+      "pass": true
+    },
+    {
+      "name": "eb10_explores_game-theoretic-adversary",
+      "pass": true,
+      "detail": "exploreJobs=93"
+    },
+    {
+      "name": "eb_deterministic_same_seed",
+      "pass": true
+    },
+    {
+      "name": "eb_flag_path_exercised",
+      "pass": true,
+      "detail": "flaggedSeen=4484 (informational)"
+    }
+  ],
+  "generatedAt": "2026-10-24T14:12:50.801Z"
+}

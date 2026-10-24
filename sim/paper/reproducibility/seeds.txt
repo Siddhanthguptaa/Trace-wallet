@@ -1,0 +1,28 @@
+# TRACE Publication Seeds
+# 10 deterministic seeds for all multi-seed experiments
+# Seeds are passed to the SeededRandom PRNG in the experiment runner
+
+# Publication matrix (10 seeds per N level):
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+
+# Extreme-scale matrix (1 seed per N level):
+42
+
+# Smoke matrix (3 seeds):
+42
+43
+44
+
+# Seed derivation:
+# - Base seed 42 chosen arbitrarily (no special properties)
+# - Sequential seeds 42-51 for simplicity and reproducibility
+# - Exploration RNG derived from seed XOR 0xE2C0FFEE (independent slot)

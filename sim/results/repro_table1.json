@@ -1,0 +1,40 @@
+{
+  "mean": 3.4,
+  "sd": 3.864,
+  "paperMean": 4.7,
+  "band": 4.3,
+  "pass": true,
+  "n": 10,
+  "cell": "TRACE-no-bandit | strategic-default | centralized (Table 1 contract) | N=1000, 30% malicious, 60x5 jobs, 5 buyers, delay 2",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51
+  ],
+  "perSeedFraud": [
+    2,
+    13,
+    0,
+    2,
+    1,
+    0,
+    2,
+    4,
+    4,
+    6
+  ],
+  "meanMaliciousRoutingRate": 0.283,
+  "paperMaliciousRoutingRate": 0.303,
+  "meanServedHonest": 74,
+  "rule": "pass iff |mean - paperMean| <= band; band = the +/- reported in Table 1 (std over 10 seeds)",
+  "source": "TRACE_CIKM2026_preprint.pdf (zenodo 22706499) Table 1 row TRACE-no-bandit, column Strategic-default: 4.7 +/- 4.3",
+  "fork": "github.com/NikunjKaushik20/Trace_CIKM @94c4b9f + patches.json",
+  "generatedAt": "2026-10-24T14:14:11.418Z"
+}

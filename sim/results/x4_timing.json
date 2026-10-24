@@ -1,0 +1,92 @@
+{
+  "machine": {
+    "totalRamGB": 16.945,
+    "logicalCpus": 16,
+    "cpu": "13th Gen Intel(R) Core(TM) i5-13450HX",
+    "node": "v24.11.0",
+    "platform": "win32-x64"
+  },
+  "centralizedRepro": {
+    "cells": 10,
+    "secondsPerCell": {
+      "mean": 51.455,
+      "min": 42.121,
+      "max": 61.016
+    },
+    "peakRssGBPerCell": {
+      "mean": 1.32,
+      "max": 1.438
+    },
+    "poolWallClockSec": 201.798,
+    "concurrency": 5
+  },
+  "partitionedProbe": {
+    "note": "timing probes on a dev seed (outcomes discarded, never reported)",
+    "singleProcessCell": {
+      "secondsPerCell": 132.2,
+      "peakRssGB": 3.37,
+      "heap1536MB": "out of memory during session 4 (heap grows ~0.4 GB per buyer session)"
+    },
+    "perSessionProcess": {
+      "secondsPerSession": [
+        21.7,
+        27.5
+      ],
+      "peakRssGB": [
+        0.88,
+        1.18
+      ],
+      "heapMB": [
+        640,
+        1024,
+        4096
+      ]
+    },
+    "cpuProfile": "74% Prisma 7 runtime (query compiler WASM + client), 10% better-sqlite3, ~4% simulation logic",
+    "sqlitePragmas": "WAL+synchronous=OFF gave no speedup and identical job hashes; left off",
+    "decision": "one process per buyer session; 1800 units; concurrency cap 6 gated on free RAM (reserve 3 GB for other lanes)"
+  },
+  "partitionedSweep": {
+    "cells": 360,
+    "sessionUnits": 1800,
+    "unitDesign": "one process per buyer session (5 per cell), heap 768 MB",
+    "unitsByBackend": {
+      "prisma-sqlite": 48,
+      "memory": 1752
+    },
+    "byBackend": {
+      "prisma-sqlite": {
+        "units": 48,
+        "meanSec": 27.767,
+        "meanRssGB": 0.833,
+        "maxRssGB": 0.977
+      },
+      "memory": {
+        "units": 1752,
+        "meanSec": 3.286,
+        "meanRssGB": 0.227,
+        "maxRssGB": 0.257
+      }
+    },
+    "secondsPerSessionUnit": {
+      "mean": 3.939,
+      "max": 44.163
+    },
+    "peakRssGBPerSessionUnit": {
+      "mean": 0.243,
+      "max": 0.977
+    },
+    "lastRun": {
+      "ran": 1728,
+      "skipped": 27,
+      "failed": [],
+      "wallClockSec": 2135.754,
+      "concurrencyCap": 6,
+      "maxObservedConcurrent": 6,
+      "minFreeMbObserved": 2490,
+      "reserveFreeMb": 3000,
+      "totalRamGB": 16.945,
+      "finishedAt": "2026-10-24T14:10:09.491Z"
+    }
+  }
+}
