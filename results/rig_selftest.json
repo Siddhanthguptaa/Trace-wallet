@@ -1,0 +1,44 @@
+{
+  "ok": true,
+  "passed": 6,
+  "total": 6,
+  "checks": [
+    {
+      "name": "new-key prints a fresh address and key",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "fund sends test ETH",
+      "expected": "50000000000000000",
+      "observed": "50000000000000000",
+      "pass": true
+    },
+    {
+      "name": "reset revokes the agent session",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "reset clears the freeze",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "reset bumps the attestation epoch",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "the rig refuses a mainnet chain id",
+      "expected": "refused",
+      "observed": "refused",
+      "pass": true
+    }
+  ],
+  "generatedAt": "2026-10-24T19:20:42.018Z"
+}

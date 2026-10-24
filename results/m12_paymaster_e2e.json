@@ -21,9 +21,9 @@
     "sponsoredReserved": "740000000000000",
     "spamAccepted": 11,
     "spamRefused": 29,
-    "attackerGainWei": "2800791000000000",
-    "paymasterDrainWei": "2800791000000000",
-    "quotaWindowBoundWei": "4440154166666666",
+    "attackerGainWei": "2799659000000000",
+    "paymasterDrainWei": "2799659000000000",
+    "quotaWindowBoundWei": "4440051388888888",
     "firstRefusal": "FailedOp(0, AA32 paymaster expired or not due)",
     "wrongPaymasterReason": "FailedOp(0, AA24 signature error)",
     "gasFieldReason": "FailedOpWithRevert(0, AA33 reverted, GasFieldAboveCap(3,150000,100000))"
@@ -114,5 +114,5 @@
       "pass": true
     }
   ],
-  "generatedAt": "2026-10-24T19:02:51.284Z"
+  "generatedAt": "2026-10-24T19:16:46.226Z"
 }

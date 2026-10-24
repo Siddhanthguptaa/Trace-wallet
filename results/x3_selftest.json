@@ -1,0 +1,68 @@
+{
+  "ok": true,
+  "passed": 10,
+  "total": 10,
+  "checks": [
+    {
+      "name": "owner tx pack: every transaction succeeds from the owner key",
+      "expected": "6",
+      "observed": "6",
+      "pass": true
+    },
+    {
+      "name": "owner tx pack: the agent session exists",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "owner tx pack: the pay-to address is a listed recipient",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "owner tx pack: ERC-1271 mode is owner + x402 voucher",
+      "expected": "1",
+      "observed": "1",
+      "pass": true
+    },
+    {
+      "name": "voucher: the op built with x3 voucherBody registers",
+      "expected": "registered",
+      "observed": "registered",
+      "pass": true
+    },
+    {
+      "name": "pay: the x3 digest + envelope get the ERC-1271 magic value",
+      "expected": "0x1626ba7e",
+      "observed": "0x1626ba7e",
+      "pass": true
+    },
+    {
+      "name": "pay: the X-PAYMENT header round-trips (x402Version 1, exact, same signature and authorization)",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "pay: the token settles the payment through the contract signature",
+      "expected": "true/5000",
+      "observed": "true/5000",
+      "pass": true
+    },
+    {
+      "name": "pay: a second use of the same nonce is refused by the token",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "verify: the agent signature with no voucher gets 0xffffffff",
+      "expected": "0xffffffff",
+      "observed": "0xffffffff",
+      "pass": true
+    }
+  ],
+  "generatedAt": "2026-10-24T19:19:32.816Z"
+}

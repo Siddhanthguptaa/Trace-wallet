@@ -1,0 +1,128 @@
+{
+  "realAccount": true,
+  "chainId": 31337,
+  "ok": true,
+  "passed": 19,
+  "total": 19,
+  "metrics": {
+    "bucketDebitAtRegistration": "1000000",
+    "reclaimCredit": "1046296"
+  },
+  "checks": [
+    {
+      "name": "owner-only: the agent key signature gets 0xffffffff",
+      "expected": "0xffffffff",
+      "observed": "0xffffffff",
+      "pass": true
+    },
+    {
+      "name": "owner-only: the token rejects the agent-signed EIP-3009 (no UserOp, nothing moves)",
+      "expected": "false/0",
+      "observed": "false/0",
+      "pass": true
+    },
+    {
+      "name": "owner-only: an agent-signed EIP-2612 permit is rejected by the token",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "owner-only: the OWNER signature gets the magic value (control)",
+      "expected": "0x1626ba7e",
+      "observed": "0x1626ba7e",
+      "pass": true
+    },
+    {
+      "name": "owner-only: the owner-signed EIP-3009 settles (control)",
+      "expected": "true/1000000",
+      "observed": "true/1000000",
+      "pass": true
+    },
+    {
+      "name": "voucher mode: an agent envelope with no registered voucher gets 0xffffffff",
+      "expected": "0xffffffff",
+      "observed": "0xffffffff",
+      "pass": true
+    },
+    {
+      "name": "register: an in-policy voucher (shop, 1 USDC, 300 s) is registered by an agent op",
+      "expected": "registered",
+      "observed": "registered",
+      "pass": true
+    },
+    {
+      "name": "register: registration debited the global bucket by the voucher value (once)",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "settle: the exact envelope gets the magic value",
+      "expected": "0x1626ba7e",
+      "observed": "0x1626ba7e",
+      "pass": true
+    },
+    {
+      "name": "settle: the shop is paid exactly once through the token",
+      "expected": "true/1000000",
+      "observed": "true/1000000",
+      "pass": true
+    },
+    {
+      "name": "settle: the same nonce a second time fails",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "tampered: the envelope for a different payee gets 0xffffffff",
+      "expected": "0xffffffff",
+      "observed": "0xffffffff",
+      "pass": true
+    },
+    {
+      "name": "tampered: the envelope for a larger value gets 0xffffffff",
+      "expected": "0xffffffff",
+      "observed": "0xffffffff",
+      "pass": true
+    },
+    {
+      "name": "tampered: a stranger-signed envelope gets 0xffffffff",
+      "expected": "0xffffffff",
+      "observed": "0xffffffff",
+      "pass": true
+    },
+    {
+      "name": "ttl: a voucher valid for 3600 s (> 600 s) is blocked at registration",
+      "expected": "blocked",
+      "observed": "blocked",
+      "pass": true
+    },
+    {
+      "name": "reclaim: before validBefore passes it is refused... after it, an unused voucher is reclaimed (permissionless)",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "reclaim: the bucket was credited back the voucher value",
+      "expected": "true",
+      "observed": "true",
+      "pass": true
+    },
+    {
+      "name": "reclaim: a second reclaim of the same voucher reverts (credited once)",
+      "expected": "false",
+      "observed": "false",
+      "pass": true
+    },
+    {
+      "name": "reclaim: a voucher whose authorization was used is marked Used and never credited",
+      "expected": "Used/no credit",
+      "observed": "Used/no credit",
+      "pass": true
+    }
+  ],
+  "generatedAt": "2026-10-24T19:15:56.955Z"
+}

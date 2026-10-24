@@ -43,6 +43,10 @@ async function startAnvil(cfg: ReturnType<typeof loadEnv>): Promise<{ proc: Chil
   throw new Error('anvil did not answer within 60 s');
 }
 
+// forge tests run by the beats build into their own out dir, never into contracts/out (which the
+// TypeScript services and harnesses read their artifacts from).
+process.env.FOUNDRY_OUT ??= 'out-demo';
+process.env.FOUNDRY_CACHE_PATH ??= 'cache-demo';
 const cfg = loadEnv();
 mkdirSync(RESULTS, { recursive: true });
 const startedAt = new Date().toISOString();

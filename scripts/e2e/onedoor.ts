@@ -107,7 +107,10 @@ async function main(): Promise<void> {
     metrics.reclaimCredit = (after - before).toString();
     add('reclaim: the bucket was credited back the voucher value', 'true', String(after - before >= 1_000_000n));
     add('reclaim: a second reclaim of the same voucher reverts (credited once)', 'false', String(await w.tryTx(DEV.attacker, 'reclaim', [n2])));
-    add('reclaim: a used voucher is marked used, never credited', 'false', String(await w.tryTx(DEV.attacker, 'reclaim', [n])));
+    const lvlUsed0 = await bucketLevel();
+    await w.tryTx(DEV.attacker, 'reclaim', [n]);
+    const used = await w.read<{ state: number }>('voucher', [n]);
+    add('reclaim: a voucher whose authorization was used is marked Used and never credited', 'Used/no credit', `${Number(used.state) === 2 ? 'Used' : `state ${used.state}`}/${(await bucketLevel()) - lvlUsed0 > 1_000n ? 'credited' : 'no credit'}`);
 
     const ok = checks.every((c) => c.pass);
     const out = { realAccount: true, chainId: w.chainId, ok, passed: checks.filter((c) => c.pass).length, total: checks.length, metrics, checks, generatedAt: new Date().toISOString() };

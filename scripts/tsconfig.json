@@ -1,0 +1,4 @@
+{
+  "extends": "../tsconfig.base.json",
+  "include": ["./**/*.ts", "../services/attestor/scripts/lib/realTarget.ts", "../services/approval/scripts/lib/realTarget.ts", "../services/approval/scripts/account-checks.ts", "../tools/demo/**/*.ts"]
+}
