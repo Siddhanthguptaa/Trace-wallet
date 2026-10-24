@@ -27,8 +27,9 @@ export const approvals = {
       method: 'POST',
       body: { signature },
     }),
-  decline: (id: string) =>
-    request(config.approvalUrl, APPROVAL, endpoints.approval.decline(id), S.approvalRequest, { method: 'POST', body: {} }),
+  /** The approval service only rejects on the owner's personal_sign of `Hypnexis approval service: reject request <id>`. */
+  decline: (id: string, signature: string) =>
+    request(config.approvalUrl, APPROVAL, endpoints.approval.decline(id), S.approvalRequest, { method: 'POST', body: { signature } }),
 };
 
 export const attestor = {

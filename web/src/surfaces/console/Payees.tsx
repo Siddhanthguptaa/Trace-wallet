@@ -108,7 +108,7 @@ export default function Payees() {
                       busy={writer.busy}
                       onRemove={() => writer.run('Remove recipient', 'setRecipient', [r.payee, false])}
                       onList={() => writer.run('List recipient', 'setRecipient', [r.payee, true])}
-                      onClear={() => writer.run('Clear flag', 'clearFlag', [r.payee])}
+                      onClear={() => writer.run('Clear flag', 'unflag', [r.payee])}
                     />
                   ))}
                 </tbody>

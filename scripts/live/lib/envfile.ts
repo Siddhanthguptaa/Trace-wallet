@@ -11,11 +11,13 @@ import { MAINNET_IDS, chainByKey } from './chains.ts';
 import type { PublicConfig } from './config.ts';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-export const ENV_LIVE = join(ROOT, '.env.live');
+/** LIVE_ENV_FILE / LIVE_STATE_DIR let the anvil rehearsal run without touching the real .env.live. */
+export const ENV_LIVE = process.env.LIVE_ENV_FILE ?? join(ROOT, '.env.live');
 export const ENV_EXAMPLE = join(ROOT, '.env.live.example');
+export const WEB_ENV = process.env.LIVE_WEB_ENV_FILE ?? join(ROOT, 'web', '.env');
 export const LIVE_DIR = join(ROOT, 'scripts', 'live');
 /** git-ignored runtime state (pids, sqlite files, spray addresses, logs). */
-export const STATE_DIR = join(LIVE_DIR, '.state');
+export const STATE_DIR = process.env.LIVE_STATE_DIR ?? join(LIVE_DIR, '.state');
 export const LOG_DIR = join(STATE_DIR, 'logs');
 
 export type Raw = Record<string, string>;
@@ -83,16 +85,22 @@ export interface Live {
   guardianAddresses: Address[];
   guardianKeys: Hex[];
   merchant: Address;
+  /** salt of R4 (the full product account) */
   salt: bigint;
+  r3Salt: bigint;
   factory: Address | '';
   implementation: Address | '';
   admin: Address | '';
   lens: Address | '';
+  /** the full-product account (R4); the CLI attacks and the watcher default to it */
   account: Address | '';
+  /** the four demo wallets the runner attacks: R1 agent EOA, R2 naive allowlist, R3 ours without D3, R4 ours with D3 */
+  wallets: { R1: Address | ''; R2: Address | ''; R3: Address | ''; R4: Address | '' };
+  fundUsdc: bigint;
   policy: { burst: bigint; rate: bigint; perTx: bigint; days: number; depositWei: bigint; gasCreditWei: bigint };
   freeze: { velocityBps: number; sprayMax: number; strikeMax: number };
-  ports: { attestor: number; approval: number; watcher: number; console: number };
-  urls: { attestor: string; approval: string; watcher: string };
+  ports: { gateway: number; attestor: number; approval: number; watcher: number };
+  urls: { gateway: string; attestor: string; approval: string; watcher: string };
   watcherPollMs: number;
   addr: { deployer: Address; agent: Address; attestor: Address; watcher: Address; attacker: Address; verifier: Address };
 }
@@ -132,19 +140,22 @@ export function readLive(path = ENV_LIVE): Live {
     guardianAddresses,
     guardianKeys,
     merchant: getAddress(get('MERCHANT_ADDRESS')),
-    salt: BigInt(opt(r, 'SALT') || '1'),
+    salt: BigInt(opt(r, 'R4_SALT') || '4'),
+    r3Salt: BigInt(opt(r, 'R3_SALT') || '3'),
     factory: addrOrEmpty(opt(r, 'FACTORY')),
     implementation: addrOrEmpty(opt(r, 'IMPLEMENTATION')),
     admin: addrOrEmpty(opt(r, 'ADMIN')),
     lens: addrOrEmpty(opt(r, 'LENS')),
     account: addrOrEmpty(opt(r, 'ACCOUNT')),
+    wallets: { R1: addrOrEmpty(opt(r, 'R1_ADDRESS')), R2: addrOrEmpty(opt(r, 'R2_ADDRESS')), R3: addrOrEmpty(opt(r, 'R3_ADDRESS')), R4: addrOrEmpty(opt(r, 'R4_ADDRESS')) },
+    fundUsdc: parseUnits(opt(r, 'FUND_USDC') || '3', dec),
     policy: {
-      burst: parseUnits(opt(r, 'DAILY_BURST_USDC') || '4', dec),
-      rate: parseUnits(opt(r, 'DAILY_RATE_USDC') || '4', dec),
-      perTx: parseUnits(opt(r, 'PER_TX_USDC') || '4', dec),
+      burst: parseUnits(opt(r, 'DAILY_BURST_USDC') || '1', dec),
+      rate: parseUnits(opt(r, 'DAILY_RATE_USDC') || '1', dec),
+      perTx: parseUnits(opt(r, 'PER_TX_USDC') || '1', dec),
       days: Number(opt(r, 'POLICY_DAYS') || '7'),
-      depositWei: parseEther(opt(r, 'DEPOSIT_ETH') || '0.003'),
-      gasCreditWei: parseEther(opt(r, 'GAS_CREDIT_ETH') || '0.02'),
+      depositWei: parseEther(opt(r, 'DEPOSIT_ETH') || '0.0001'),
+      gasCreditWei: parseEther(opt(r, 'GAS_CREDIT_ETH') || '0.0005'),
     },
     freeze: {
       velocityBps: Number(opt(r, 'FREEZE_VELOCITY_BPS') || '6000'),
@@ -152,15 +163,16 @@ export function readLive(path = ENV_LIVE): Live {
       strikeMax: Number(opt(r, 'FREEZE_STRIKE_MAX') || '3'),
     },
     ports: {
-      attestor: Number(opt(r, 'ATTESTOR_PORT') || '8789'),
-      approval: Number(opt(r, 'APPROVAL_PORT') || '8788'),
-      watcher: Number(opt(r, 'WATCHER_PORT') || '8790'),
-      console: Number(opt(r, 'CONSOLE_PORT') || '8799'),
+      gateway: Number(opt(r, 'GATEWAY_PORT') || '8800'),
+      approval: Number(opt(r, 'APPROVAL_PORT') || '8801'),
+      attestor: Number(opt(r, 'ATTESTOR_PORT') || '8802'),
+      watcher: Number(opt(r, 'WATCHER_PORT') || '8803'),
     },
     urls: {
-      attestor: opt(r, 'ATTESTOR_URL') || `http://127.0.0.1:${opt(r, 'ATTESTOR_PORT') || '8789'}`,
-      approval: opt(r, 'APPROVAL_URL') || `http://127.0.0.1:${opt(r, 'APPROVAL_PORT') || '8788'}`,
-      watcher: opt(r, 'WATCHER_URL') || `http://127.0.0.1:${opt(r, 'WATCHER_PORT') || '8790'}`,
+      gateway: opt(r, 'GATEWAY_URL') || `http://localhost:${opt(r, 'GATEWAY_PORT') || '8800'}`,
+      approval: opt(r, 'APPROVAL_URL') || `http://127.0.0.1:${opt(r, 'APPROVAL_PORT') || '8801'}`,
+      attestor: opt(r, 'ATTESTOR_URL') || `http://127.0.0.1:${opt(r, 'ATTESTOR_PORT') || '8802'}`,
+      watcher: opt(r, 'WATCHER_URL') || `http://127.0.0.1:${opt(r, 'WATCHER_PORT') || '8803'}`,
     },
     watcherPollMs: Number(opt(r, 'WATCHER_POLL_MS') || '3000'),
     addr: {
@@ -186,7 +198,7 @@ export function guardMainnet(L: Pick<Live, 'chainId' | 'chainKey'>, allow: boole
 }
 
 /** The public view the owner console receives: addresses and policy numbers, NEVER a key. */
-export function publicConfig(L: Live): PublicConfig {
+export function publicConfig(L: Live, account: Address | '' = L.account): PublicConfig {
   return {
     chainId: L.chainId,
     chainName: L.chainName,
@@ -197,7 +209,7 @@ export function publicConfig(L: Live): PublicConfig {
     usdcDecimals: L.usdcDecimals,
     owner: L.owner || '',
     factory: L.factory || '',
-    account: L.account || '',
+    account: account || '',
     salt: L.salt.toString(),
     agent: L.addr.agent,
     attestor: L.addr.attestor,
@@ -214,7 +226,7 @@ export function publicConfig(L: Live): PublicConfig {
       gasCreditWei: L.policy.gasCreditWei.toString(),
     },
     freeze: L.freeze,
-    urls: L.urls,
+    urls: { attestor: L.urls.attestor, approval: L.urls.approval, watcher: L.urls.watcher },
     outcomeVouches: 3,
   };
 }

@@ -167,12 +167,20 @@ function AccountCaps({ caps, wallet, isOwner }: { caps: AssetCaps; wallet: `0x${
 
   const save = async () => {
     if (!valid) return;
+    // The contract's buckets are burst + refill-per-day = cap (default burst = cap / 2).
+    const split = (cap: bigint) => [cap / 2n, cap - cap / 2n] as const;
     if (changedG) {
-      const ok = await writer.run(`Set ${asset.symbol} account cap`, 'setGlobalCap', [asset.address, ng]);
+      const [burst, rate] = split(ng!);
+      const ok = await writer.run(`Set ${asset.symbol} account cap`, 'setGlobalCap', [asset.address, burst, rate]);
       if (!ok) return;
     }
-    if (changedE) {
-      const ok = await writer.run(`Set ${asset.symbol} exploration caps`, 'setExploreCaps', [asset.address, ne, nt]);
+    if (ne !== null && ne !== caps.exploreCap) {
+      const [burst, rate] = split(ne);
+      const ok = await writer.run(`Set ${asset.symbol} exploration budget`, 'setExploreCap', [asset.address, burst, rate]);
+      if (!ok) return;
+    }
+    if (nt !== null && nt !== caps.explorePerTxCap) {
+      const ok = await writer.run(`Set ${asset.symbol} exploration per-payment cap`, 'setExplorePerTxCap', [asset.address, nt]);
       if (!ok) return;
     }
     setEditing(false);

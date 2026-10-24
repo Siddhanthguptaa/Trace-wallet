@@ -8,15 +8,18 @@ import { spawn } from 'node:child_process';
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fetchJson, sleep } from './chainio.ts';
-import { LOG_DIR, ROOT, STATE_DIR, type Live } from './envfile.ts';
+import { ENV_LIVE, LOG_DIR, ROOT, STATE_DIR, type Live } from './envfile.ts';
 
-export type ServiceName = 'attestor' | 'approval' | 'watcher';
-export const SERVICE_NAMES: ServiceName[] = ['attestor', 'approval', 'watcher'];
+export type ServiceName = 'attestor' | 'approval' | 'watcher' | 'gateway';
+/** the gateway starts last: it fronts the other three for the frontend (and hosts the attack runner) */
+export const SERVICE_NAMES: ServiceName[] = ['attestor', 'approval', 'watcher', 'gateway'];
 const PIDS = join(STATE_DIR, 'pids.json');
 
 interface Def {
   cwd: string;
   entry: string;
+  /** gateway only: started with `pnpm --filter @hypnexis/gateway start` once services/gateway exists */
+  pnpm?: string[];
   port: (L: Live) => number;
   url: (L: Live) => string;
   env: (L: Live) => Record<string, string>;
@@ -42,7 +45,7 @@ const DEFS: Record<ServiceName, Def> = {
       ATTESTOR_PORT: String(L.ports.attestor),
       ATTESTOR_DB: join(STATE_DIR, 'attestor.sqlite'),
       ATTESTOR_MODE: 'trace',
-      WALLETS: L.account,
+      WALLETS: [L.wallets.R3, L.wallets.R4].filter(Boolean).join(','),
     }),
   },
   approval: {
@@ -70,13 +73,22 @@ const DEFS: Record<ServiceName, Def> = {
       WATCHER_PRIVATE_KEY: L.watcherKey,
       RPC_URL: L.rpcUrl,
       CHAIN_ID: String(L.chainId),
-      WATCHER_ACCOUNTS: L.account,
+      WATCHER_ACCOUNTS: [L.wallets.R3, L.wallets.R4].filter(Boolean).join(','),
       ENTRYPOINT: L.entryPoint,
       AGENT_ADDRESSES: L.addr.agent,
       WATCHER_PORT: String(L.ports.watcher),
       POLL_MS: String(L.watcherPollMs),
       WATCHER_CONFIG: watcherConfig(),
     }),
+  },
+  gateway: {
+    cwd: '.',
+    entry: '',
+    pnpm: ['--filter', '@hypnexis/gateway', 'start'],
+    port: (L) => L.ports.gateway,
+    url: (L) => L.urls.gateway,
+    // the gateway reads the whole live environment (wallets, keys of the throwaway roles, service URLs)
+    env: (L) => ({ ...L.raw, LIVE_ENV_FILE: ENV_LIVE, GATEWAY_PORT: String(L.ports.gateway), APPROVAL_URL: L.urls.approval, ATTESTOR_URL: L.urls.attestor, WATCHER_URL: L.urls.watcher }),
   },
 };
 
@@ -111,18 +123,18 @@ export async function servicesUp(L: Live, only: ServiceName[] = SERVICE_NAMES, l
   const pids = readPids();
   for (const name of only) {
     const def = DEFS[name];
+    if (name === 'gateway' && !existsSync(join(ROOT, 'services', 'gateway', 'package.json'))) {
+      log('  gateway: services/gateway does not exist yet (the frontend needs it on :' + def.port(L) + '); skipping');
+      continue;
+    }
     if ((await healthOf(name, L)).up) {
       log(`  ${name}: already up at ${def.url(L)}`);
       continue;
     }
     const out = openSync(join(LOG_DIR, `${name}.log`), 'a');
-    const child = spawn(process.execPath, ['--import', 'tsx', def.entry], {
-      cwd: join(ROOT, def.cwd),
-      env: { ...process.env, ...def.env(L) },
-      detached: true,
-      stdio: ['ignore', out, out],
-      windowsHide: true,
-    });
+    const child = def.pnpm
+      ? spawn(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', def.pnpm, { cwd: join(ROOT, def.cwd), env: { ...process.env, ...def.env(L) }, detached: true, stdio: ['ignore', out, out], windowsHide: true, shell: process.platform === 'win32' })
+      : spawn(process.execPath, ['--import', 'tsx', def.entry], { cwd: join(ROOT, def.cwd), env: { ...process.env, ...def.env(L) }, detached: true, stdio: ['ignore', out, out], windowsHide: true });
     child.unref();
     closeSync(out);
     pids[name] = child.pid;
@@ -148,7 +160,8 @@ export async function servicesDown(only: ServiceName[] = SERVICE_NAMES, log: (m:
     const pid = pids[name];
     if (alive(pid)) {
       try {
-        process.kill(pid!);
+        if (process.platform === 'win32') (await import('node:child_process')).spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
+        else process.kill(pid!);
         log(`  ${name}: stopped (pid ${pid})`);
       } catch (e) {
         log(`  ${name}: could not stop pid ${pid}: ${(e as Error).message}`);

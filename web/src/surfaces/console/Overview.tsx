@@ -112,7 +112,7 @@ export default function Overview() {
                         {k.validUntil ? `Valid until ${dateTime(k.validUntil)} (${relativeTime(k.validUntil)})` : 'No expiry set'}
                       </span>
                       {!k.revoked ? (
-                        <HoldButton disabled={!isOwner || writer.busy} onConfirm={() => writer.run('Revoke agent key', 'revokeKey', [k.agentKey])}>
+                        <HoldButton disabled={!isOwner || writer.busy} onConfirm={() => writer.run('Revoke agent key', 'revoke', [k.agentKey])}>
                           Hold to revoke this key
                         </HoldButton>
                       ) : null}

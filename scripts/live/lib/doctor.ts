@@ -2,7 +2,6 @@
  * `live.ts doctor`: preflight for the whole demo as a green / red checklist. Every line says what was
  * checked, what was found, and (when it fails) the exact command that fixes it. Exit code 1 if any red.
  */
-import { createServer } from 'node:net';
 import { type Address, formatEther, formatUnits, parseEther } from 'viem';
 import { accountAbi } from '../../lib/stack.ts';
 import { green, red, yellow, bold, dim } from './agent.ts';
@@ -21,14 +20,6 @@ interface Check {
 }
 
 const ZERO = '0x0000000000000000000000000000000000000000';
-
-async function portFree(port: number): Promise<boolean> {
-  return new Promise((res) => {
-    const s = createServer();
-    s.once('error', () => res(false));
-    s.listen(port, '127.0.0.1', () => s.close(() => res(true)));
-  });
-}
 
 export async function doctor(log: (m: string) => void = console.log, opts: { allowMainnet?: boolean } = {}): Promise<boolean> {
   const checks: Check[] = [];
@@ -89,13 +80,13 @@ export async function doctor(log: (m: string) => void = console.log, opts: { all
     const same = Object.entries(L.addr).find(([, a]) => a.toLowerCase() === L.owner.toLowerCase());
     add(same ? 'fail' : 'ok', 'owner address set (public MetaMask address only)', same ? `OWNER_ADDRESS equals the throwaway ${same[0]} key: the owner must be your MetaMask account` : L.owner, same ? 'live.ts init --owner <your MetaMask address>' : undefined);
     const ownerEth = await pub.getBalance({ address: L.owner });
-    add(ownerEth >= parseEther('0.002') ? 'ok' : 'warn', 'owner has test ETH for its transactions', `${formatEther(ownerEth)} ETH`, `send ~0.01 Base Sepolia ETH to ${L.owner}`);
+    add(ownerEth >= parseEther('0.00003') ? 'ok' : 'warn', 'owner has test ETH for its transactions', `${formatEther(ownerEth)} ETH`, `send ~0.01 Base Sepolia ETH to ${L.owner}`);
   }
 
   // deployer
   const dep = await pub.getBalance({ address: L.addr.deployer });
   const deployed = !!L.factory;
-  const need = deployed ? parseEther('0.001') : parseEther('0.01');
+  const need = deployed ? parseEther('0.00005') : parseEther('0.0006');
   add(dep >= need ? 'ok' : deployed ? 'warn' : 'fail', 'deployer / relayer has ETH', `${formatEther(dep)} ETH at ${L.addr.deployer}`, `send ~0.02 ETH to ${L.addr.deployer}`);
 
   // deployment
@@ -103,49 +94,55 @@ export async function doctor(log: (m: string) => void = console.log, opts: { all
   const dOk = (await code(L.factory)) && (await code(L.implementation)) && (await code(L.lens));
   add(dOk ? 'ok' : 'fail', 'stack deployed (factory, implementation, lens)', dOk ? `factory ${L.factory}` : 'not deployed', 'pnpm exec tsx scripts/live/live.ts deploy');
 
-  // account
-  if (dOk && L.account) {
-    const acctCode = await code(L.account);
-    if (!acctCode) add('warn', 'agent account created by the owner', `${L.account} has no code yet`, 'console step 1 “Create my agent account” (MetaMask)');
-    else {
+  // the four demo wallets
+  const usdcOf = (x: string) => pub.readContract({ address: L.usdc, abi: usdcAbi, functionName: 'balanceOf', args: [x as Address] }) as Promise<bigint>;
+  const depositOf = async (x: string) => (await pub.readContract({ address: L.entryPoint, abi: (await import('../../lib/stack.ts')).loadArtifact('EntryPoint').abi, functionName: 'balanceOf', args: [x as Address] })) as bigint;
+  const daily = L.policy.burst + L.policy.rate;
+  const funded = (label: string, bal: bigint) =>
+    add(bal >= L.fundUsdc ? 'ok' : bal > 0n ? 'warn' : 'fail', `${label} holds real test USDC`, `${formatUnits(bal, L.usdcDecimals)} USDC (target ${formatUnits(L.fundUsdc, L.usdcDecimals)})`, label.startsWith('R4') ? 'R4: send it from MetaMask in the frontend (Setup step 4); others: live.ts fund --send' : 'pnpm exec tsx scripts/live/live.ts fund --send');
+  if (!dOk) add('warn', 'wallets R1-R4', 'skipped: stack not deployed');
+  else {
+    for (const n of ['R1', 'R2', 'R3', 'R4'] as const) {
+      const a = L.wallets[n];
+      if (!a || !(await code(a)) && n !== 'R1') {
+        add('fail', `${n} wallet deployed`, a ? `${a} has no code` : 'address not recorded', 'pnpm exec tsx scripts/live/live.ts deploy');
+        continue;
+      }
+      add('ok', `${n} wallet deployed`, a);
+      funded(`${n}`, await usdcOf(a));
+      if (n === 'R1') continue;
+      const dpt = await depositOf(a);
+      add(dpt >= parseEther('0.00004') ? 'ok' : 'warn', `${n} has an EntryPoint gas deposit`, `${formatEther(dpt)} ETH`, 'live.ts deploy tops it up');
+      if (n === 'R2') continue;
+      // R3 / R4: the owner's configuration (done in the frontend / owner-pack)
       const abi = accountAbi();
-      const rd = <T>(fn: string, args: unknown[] = []) => pub.readContract({ address: L.account as Address, abi, functionName: fn, args } as never) as Promise<T>;
+      const rd = <T>(fn: string, args: unknown[] = []) => pub.readContract({ address: a, abi, functionName: fn, args } as never) as Promise<T>;
       const owner = await rd<Address>('owner');
-      add(owner.toLowerCase() === L.owner.toLowerCase() ? 'ok' : 'fail', 'account owner is your MetaMask address', owner, 'OWNER_ADDRESS differs from the on-chain owner');
+      add(owner.toLowerCase() === L.owner.toLowerCase() ? 'ok' : 'fail', `${n} owner is your MetaMask address`, owner, 'OWNER_ADDRESS differs from the on-chain owner');
       const g = await rd<{ burst: bigint; ratePerDay: bigint; lastRefill: number }>('globalBucket', [L.usdc]);
-      add(g.lastRefill !== 0 ? 'ok' : 'warn', 'daily limit configured', g.lastRefill !== 0 ? `${formatUnits(g.burst + g.ratePerDay, L.usdcDecimals)} USDC / 24 h` : 'not set', 'console step 2');
-      const [sid, s] = await rd<[bigint, { revoked: boolean; validUntil: number }]>('sessionOf', [L.addr.agent]);
+      add(g.lastRefill !== 0 ? 'ok' : 'warn', `${n} daily limit configured`, g.lastRefill !== 0 ? `${formatUnits(g.burst + g.ratePerDay, L.usdcDecimals)} USDC / 24 h (target ${formatUnits(daily, L.usdcDecimals)})` : 'not set (owner step)', 'frontend Policy, or: live.ts owner-pack');
+      const [sid, sess] = await rd<[bigint, { revoked: boolean; validUntil: number }]>('sessionOf', [L.addr.agent]);
       const now = Number((await pub.getBlock()).timestamp);
-      add(sid !== 0n && !s.revoked && Number(s.validUntil) > now ? 'ok' : 'warn', 'agent session key live', sid === 0n ? 'no session' : s.revoked ? 'revoked' : Number(s.validUntil) > now ? `valid until ${new Date(Number(s.validUntil) * 1000).toISOString()}` : 'expired', 'console step 5');
+      add(sid !== 0n && !sess.revoked && Number(sess.validUntil) > now ? 'ok' : 'warn', `${n} agent session key live`, sid === 0n ? 'no session (owner step)' : sess.revoked ? 'revoked' : Number(sess.validUntil) > now ? `valid until ${new Date(Number(sess.validUntil) * 1000).toISOString()}` : 'expired', 'frontend Setup/Keys, or: live.ts owner-pack');
       const att = await rd<Address>('attestor');
-      add(att.toLowerCase() === L.addr.attestor.toLowerCase() ? 'ok' : 'warn', 'account trusts the attestor', att === ZERO ? 'none set' : att, 'console step 6');
+      if (n === 'R4') add(att.toLowerCase() === L.addr.attestor.toLowerCase() ? 'ok' : 'warn', 'R4 trusts the real attestor', att === ZERO ? 'none set (owner step)' : att, 'frontend Setup step 3');
+      else add(att === ZERO ? 'ok' : 'warn', 'R3 has no attestor (that is the point of R3)', att === ZERO ? 'none' : att);
       const w = await rd<Address>('watcher');
-      add(w.toLowerCase() === L.addr.watcher.toLowerCase() ? 'ok' : 'warn', 'account lets the watcher freeze', w === ZERO ? 'none set' : w, 'console step 7');
-      const [gs] = await rd<[Address[], number]>('guardians');
-      add(gs.length === 5 ? 'ok' : 'warn', 'five guardians (3 of 5)', `${gs.length} set`, 'console step 8');
-      const usdcBal = (await pub.readContract({ address: L.usdc, abi: usdcAbi, functionName: 'balanceOf', args: [L.account] })) as bigint;
-      const daily = g.burst + g.ratePerDay;
-      add(usdcBal >= daily ? 'ok' : usdcBal > 0n ? 'warn' : 'fail', 'account holds test USDC', `${formatUnits(usdcBal, L.usdcDecimals)} USDC${usdcBal > 0n && usdcBal < daily ? ` (less than the ${formatUnits(daily, L.usdcDecimals)} daily limit: the balance, not the limit, would bound the loss)` : ''}`, `get 10 USDC at https://faucet.circle.com (Base Sepolia) sent to ${L.account}, or console step 11`);
-      const dpt = (await pub.readContract({ address: L.entryPoint, abi: (await import('../../lib/stack.ts')).loadArtifact('EntryPoint').abi, functionName: 'balanceOf', args: [L.account] })) as bigint;
-      add(dpt >= parseEther('0.001') ? 'ok' : 'warn', 'account has an EntryPoint gas deposit', `${formatEther(dpt)} ETH`, 'console step 10');
+      add(w.toLowerCase() === L.addr.watcher.toLowerCase() ? 'ok' : 'warn', `${n} lets the watcher freeze`, w === ZERO ? 'none set (owner step)' : w, 'live.ts owner-pack (setWatcher)');
     }
   }
 
   // service keys
   for (const [n, a] of [['watcher', L.addr.watcher], ['attestor', L.addr.attestor]] as const) {
     const b = await pub.getBalance({ address: a });
-    add(b >= parseEther('0.0003') ? 'ok' : 'warn', `${n} key has ETH for its transactions`, `${formatEther(b)} ETH at ${a}`, 'live.ts fund-keys');
+    add(b >= parseEther('0.00002') ? 'ok' : 'warn', `${n} key has ETH for its transactions`, `${formatEther(b)} ETH at ${a}`, 'live.ts fund-keys');
   }
 
   // services
   for (const n of SERVICE_NAMES) {
     const h = await healthOf(n, L);
-    add(h.up ? 'ok' : 'warn', `${n} service healthy`, h.up ? h.detail.slice(0, 100) : `down (${h.detail})`, 'live.ts services up');
+    add(h.up ? 'ok' : 'warn', `${n} service healthy${n === 'gateway' ? ` (the frontend talks only to this: ${L.urls.gateway})` : ''}`, h.up ? h.detail.slice(0, 100) : `down (${h.detail})`, 'pnpm exec tsx scripts/live/live.ts services up');
   }
-
-  // console port
-  const ports = await portFree(L.ports.console);
-  add(ports ? 'ok' : 'warn', `console port ${L.ports.console}`, ports ? 'free' : 'in use (the console may already be running)');
 
   return print(checks, log);
 }

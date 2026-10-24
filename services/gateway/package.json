@@ -1,0 +1,26 @@
+{
+  "name": "@hypnexis/gateway",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "One HTTP process for the web frontend: agent tools, approvals, attestor and the attack runner, all backed by the real chain and the real services.",
+  "exports": { ".": "./src/app.ts" },
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "@hypnexis/shared": "workspace:*",
+    "hono": "^4.6.0",
+    "viem": "^2.21.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.0"
+  }
+}

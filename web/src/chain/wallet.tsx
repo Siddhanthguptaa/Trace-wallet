@@ -12,6 +12,8 @@ type WalletState = {
   connect: () => Promise<void>;
   switchChain: () => Promise<void>;
   signTypedData: (data: TypedData) => Promise<Hex>;
+  /** personal_sign (EIP-191) of a short text, used to decline an approval request. */
+  signMessage: (message: string) => Promise<Hex>;
   write: (args: { address: Address; abi: Abi; functionName: string; args?: readonly unknown[] }) => Promise<Hex>;
   /** Open this page inside MetaMask Mobile's browser, where signing works without extra setup. */
   metamaskDeepLink: string;
@@ -129,6 +131,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [provider, account],
   );
 
+  const signMessage = useCallback(
+    async (message: string): Promise<Hex> => {
+      if (!provider || !account) throw new Error('Connect your wallet first.');
+      try {
+        const client = createWalletClient({ account, chain, transport: custom(provider) });
+        return await client.signMessage({ account, message });
+      } catch (e) {
+        throw new Error(friendly(e));
+      }
+    },
+    [provider, account],
+  );
+
   const write = useCallback<WalletState['write']>(
     async ({ address, abi, functionName, args }) => {
       if (!provider || !account) throw new Error('Connect your wallet first.');
@@ -153,13 +168,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       connect,
       switchChain,
       signTypedData,
+      signMessage,
       write,
       metamaskDeepLink:
         typeof window !== 'undefined'
           ? `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}${window.location.search}`
           : '',
     }),
-    [provider, account, chainId, connecting, error, connect, switchChain, signTypedData, write],
+    [provider, account, chainId, connecting, error, connect, switchChain, signTypedData, signMessage, write],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

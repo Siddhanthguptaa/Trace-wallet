@@ -5,8 +5,10 @@
  *
  *   pnpm exec tsx scripts/live/live.ts <command> [options]
  *
- *   init --owner 0x…           write .env.live (throwaway testnet keys + your PUBLIC owner address)
- *   deploy                     deploy the stack (libraries linked) and compute the account address
+ *   init --owner 0x…           write .env.live + web/.env (throwaway testnet keys + your PUBLIC owner address)
+ *   deploy                     deploy the stack and the FOUR wallets R1-R4 (libraries linked)
+ *   fund [--send]              what to send where; --send pays R1/R2/R3 from the deployer's faucet USDC
+ *   owner-pack                 the owner transactions for R3/R4 as calldata (fallback to the frontend)
  *   fund-keys [--guardians]    send gas money to the watcher / attestor (/ guardian) keys
  *   services up|down|status    the real attestor, approval service and watcher as processes
  *   doctor                     preflight checklist (green / red)
@@ -19,10 +21,11 @@
  *   vouch --payee 0x…          verifier-signed outcomes (non-interactive way to make a payee PROVEN)
  *   recovery propose|approve|status   play the guardians
  *   watcher                    start only the real watcher service
- *   console [--port N] [--frontend dir]   owner-console backend (serves YOUR frontend + the API)
  *
  * Global: --allow-mainnet (otherwise any mainnet is refused).
  */
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { type Address, type Hex, getAddress, isAddress, parseUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { outcomeTypedData } from '../../packages/shared/src/attestor/typedData.ts';
@@ -31,9 +34,10 @@ import { agentPay, attackApproveMax, attackForged, attackSideDoor, attackSpray, 
 import { fetchJson, makeDeployer, publicClient, sleep } from './lib/chainio.ts';
 import { txUrl } from './lib/chains.ts';
 import { doctor } from './lib/doctor.ts';
-import { guardMainnet, readLive } from './lib/envfile.ts';
+import { LIVE_DIR, guardMainnet, readLive } from './lib/envfile.ts';
 import { SERVICE_NAMES, type ServiceName, servicesDown, servicesStatus, servicesUp } from './lib/services.ts';
-import { deploy, fundKeys, init } from './lib/setup.ts';
+import { deploy, fund, fundKeys, init } from './lib/setup.ts';
+import { ownerPack } from './lib/ownerPack.ts';
 import { getStatus, render } from './lib/status.ts';
 
 const argv = process.argv.slice(2);
@@ -50,10 +54,30 @@ async function main(): Promise<void> {
   const allow = flag('--allow-mainnet');
   switch (cmd) {
     case 'init':
-      return init({ owner: opt('--owner'), chain: opt('--chain') ?? 'base-sepolia', rpc: opt('--rpc'), merchant: opt('--merchant'), salt: opt('--salt'), usdc: opt('--usdc'), force: flag('--force'), allowMainnet: allow, log });
+      return init({ owner: opt('--owner'), chain: opt('--chain') ?? 'base-sepolia', rpc: opt('--rpc'), merchant: opt('--merchant'), usdc: opt('--usdc'), force: flag('--force'), allowMainnet: allow, log });
     case 'deploy': {
       const L = readLive();
       return deploy(L, { redeploy: flag('--redeploy'), allowMainnet: allow, log });
+    }
+    case 'fund': {
+      const L = readLive();
+      return fund(L, { send: flag('--send'), includeR4: flag('--include-r4'), allowMainnet: allow, log });
+    }
+    case 'owner-pack': {
+      const L = readLive();
+      guardMainnet(L, allow);
+      const pack = ownerPack(L, Math.floor(Date.now() / 1000));
+      const file = join(LIVE_DIR, 'owner_txs.json');
+      writeFileSync(file, `${JSON.stringify({ chainId: L.chainId, owner: L.owner, note: 'send each transaction from the OWNER account in MetaMask, in order, per wallet (to / data / value). Generated; contains no key.', pack: pack.map((p) => ({ ...p, steps: p.steps.map((s) => ({ ...s, value: s.value.toString() })) })) }, null, 2)}
+`);
+      for (const p of pack) {
+        log(bold(`
+${p.wallet}  ${p.account}   (${p.steps.length} owner transactions)`));
+        p.steps.forEach((s, i) => log(`  ${String(i + 1).padStart(2)}. ${s.title.padEnd(36)} to ${s.to}  ${s.label}`));
+      }
+      log(`
+wrote ${file} (calldata for MetaMask; the frontend does the same through its own screens)`);
+      return;
     }
     case 'fund-keys': {
       const L = readLive();
@@ -206,17 +230,6 @@ async function main(): Promise<void> {
       }
       throw new Error('usage: recovery propose --new-owner 0x… [--guardian N] | approve [--id N --guardian N] | status');
     }
-    case 'console': {
-      const L = readLive();
-      guardMainnet(L, allow);
-      const { startConsole } = await import('./console/server.ts');
-      const c = await startConsole({ port: opt('--port') ? Number(opt('--port')) : undefined, frontend: opt('--frontend'), log });
-      const st = await servicesStatus(L, () => undefined);
-      if (!Object.values(st).every(Boolean)) log(yellow('  note: some services are down. Run: pnpm exec tsx scripts/live/live.ts services up'));
-      void c;
-      await new Promise(() => undefined); // run until Ctrl+C
-      return;
-    }
     default:
       log(readHelp());
       if (cmd && cmd !== 'help' && cmd !== '--help') process.exitCode = 1;
@@ -226,10 +239,10 @@ async function main(): Promise<void> {
 function readHelp(): string {
   return `Hypnexis live demo (real testnet, real services, your MetaMask as owner)
 
-  init --owner 0x…  |  deploy  |  fund-keys [--guardians]  |  services up|down|status  |  doctor
+  init --owner 0x…  |  deploy  |  fund [--send]  |  owner-pack  |  fund-keys [--guardians]  |  services up|down|status  |  doctor
   status [--json]   |  leak    |  attack unproven|forged|spray|sidedoor|approvemax|all
   legit [--amount N] | pay --to 0x… --amount N [--attested] | request --to 0x… --amount N
-  vouch --payee 0x…  |  recovery propose|approve|status  |  watcher  |  console
+  vouch --payee 0x…  |  recovery propose|approve|status  |  watcher
 
 Run \`doctor\` first. Full walkthrough: docs/live_demo_metamask.md`;
 }

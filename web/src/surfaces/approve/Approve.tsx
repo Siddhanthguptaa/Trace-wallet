@@ -105,7 +105,8 @@ function Request({ req }: { req: ApprovalRequest }) {
     setErr(null);
     setBusy('decline');
     try {
-      const updated = await approvals.decline(req.id);
+      const sig = await w.signMessage(`Hypnexis approval service: reject request ${req.id}`);
+      const updated = await approvals.decline(req.id, sig);
       qc.setQueryData(qk.approval(req.id), updated);
     } catch (e) {
       setErr((e as Error).message);

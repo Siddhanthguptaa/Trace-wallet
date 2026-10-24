@@ -1,0 +1,181 @@
+{
+  "ok": true,
+  "rehearsal": true,
+  "note": "anvil pre-flight with a stand-in token and an impersonated owner; the demo itself runs on Base Sepolia with Circle test USDC and your MetaMask",
+  "seconds": 45,
+  "services": [
+    "attestor",
+    "approval",
+    "watcher",
+    "gateway"
+  ],
+  "attacks": [
+    {
+      "attack": "sidedoor",
+      "gainBaseUnits": "0",
+      "frozenAtOp": null,
+      "withinLimit": true
+    },
+    {
+      "attack": "approvemax",
+      "gainBaseUnits": "0",
+      "frozenAtOp": null,
+      "withinLimit": true
+    },
+    {
+      "attack": "unproven",
+      "gainBaseUnits": "40000",
+      "frozenAtOp": 5,
+      "withinLimit": true
+    },
+    {
+      "attack": "forged",
+      "gainBaseUnits": "0",
+      "frozenAtOp": null,
+      "withinLimit": true
+    }
+  ],
+  "notes": [],
+  "checks": [
+    {
+      "name": "stand-in token deployed (rehearsal only; Base Sepolia uses Circle test USDC)",
+      "pass": true,
+      "detail": "0xc2Bb2bC41349C56ED3E4d4aFd848102e8A037E41"
+    },
+    {
+      "name": "init wrote .env.live without any owner key",
+      "pass": true,
+      "detail": "owner 0xa93C470B37e4fA1Dfc3cE1f989342E273657b43E"
+    },
+    {
+      "name": "stack deployed (factory, implementation, lens)",
+      "pass": true,
+      "detail": "0x64105Bad1140B479AceE10722AC795579ad39a4A"
+    },
+    {
+      "name": "R2 deployed",
+      "pass": true,
+      "detail": "0x9f943287CFB20D969CB0995433D7389860c3d73a"
+    },
+    {
+      "name": "R3 deployed",
+      "pass": true,
+      "detail": "0x314e758d454b7C46a1775E3BaCa2fdbEd9fcB2D9"
+    },
+    {
+      "name": "R4 deployed",
+      "pass": true,
+      "detail": "0x862922f69f198A81D10a640e2DFfd78f2991AA2b"
+    },
+    {
+      "name": "R1 is the agent EOA",
+      "pass": true,
+      "detail": "0x0b8DD67cDF60D0B928012cEaF3653AF0Cb5B6953"
+    },
+    {
+      "name": "ACCOUNT is R4",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "R1 holds 3 USDC",
+      "pass": true,
+      "detail": "3"
+    },
+    {
+      "name": "R2 holds 3 USDC",
+      "pass": true,
+      "detail": "3"
+    },
+    {
+      "name": "R3 holds 3 USDC",
+      "pass": true,
+      "detail": "3"
+    },
+    {
+      "name": "R4 holds 3 USDC",
+      "pass": true,
+      "detail": "3"
+    },
+    {
+      "name": "R3: 11 owner transactions applied",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "R4: 10 owner transactions applied",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "attestor service is up (real process)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "approval service is up (real process)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "watcher service is up (real process)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "gateway",
+      "pass": true,
+      "detail": "up"
+    },
+    {
+      "name": "gateway answers the runner API (/v1/cards)",
+      "pass": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "gateway answers the agent-tools API (/tools/get_policy)",
+      "pass": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "doctor: no red with services up",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "attack sidedoor: gain 0 USDC within the daily limit 2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "attack approvemax: gain 0 USDC within the daily limit 2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "attack unproven: gain 0.04 USDC within the daily limit 2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "the key was frozen by the tripwires / watcher after the unproven drain",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "only the owner can unfreeze; the key is live again",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "attack forged: gain 0 USDC within the daily limit 2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "all attacks together stay below the wallet balance",
+      "pass": true,
+      "detail": "0.04 of 3 USDC"
+    }
+  ]
+}

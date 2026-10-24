@@ -1,0 +1,54 @@
+{
+  "chainId": 31337,
+  "chain": "anvil",
+  "deployer": "0x8d872AAc9153AB868B26D5fE4e53350EF7AB951D",
+  "entryPoint": "0x831356E9d6A306f17d22cbd1f341855ab2f62860",
+  "entryPointDeployedByUs": true,
+  "libraries": {
+    "ApprovalLib": "0x6da8066445C53DE723D07b58C0cD06ca153cC898",
+    "FreezeTripwires": "0xE8B142d5577Ead11c07d1F9AE456406cbfbfB9B5",
+    "MeterLib": "0x24C223381A6AEBDD9681002AAFF261182345F5fd",
+    "OneDoorLib": "0xFb95aa1FB2F286d1B8D4dacb9915C976F7f0C0C0"
+  },
+  "admin": "0x3CaB645e7E2Af17b9032aFE9Bf486EF6Ff1936Ca",
+  "implementation": "0x2d988f58b63C895Af6b072b77F1828e006c632E8",
+  "factory": "0x64105Bad1140B479AceE10722AC795579ad39a4A",
+  "lens": "0xdCa223F9B3136aCe213AF1490Adf3DeE15F30CCe",
+  "artifacts": "./contracts/out",
+  "deployedAt": "2026-10-24T20:39:19.964Z",
+  "live": {
+    "wallets": {
+      "R1": {
+        "address": "0x0b8DD67cDF60D0B928012cEaF3653AF0Cb5B6953",
+        "kind": "eoa"
+      },
+      "R2": {
+        "address": "0x9f943287CFB20D969CB0995433D7389860c3d73a",
+        "kind": "naive"
+      },
+      "R3": {
+        "address": "0x314e758d454b7C46a1775E3BaCa2fdbEd9fcB2D9",
+        "kind": "agent"
+      },
+      "R4": {
+        "address": "0x862922f69f198A81D10a640e2DFfd78f2991AA2b",
+        "kind": "agent"
+      }
+    },
+    "R1": "0x0b8DD67cDF60D0B928012cEaF3653AF0Cb5B6953",
+    "R2": "0x9f943287CFB20D969CB0995433D7389860c3d73a",
+    "R3": "0x314e758d454b7C46a1775E3BaCa2fdbEd9fcB2D9",
+    "R4": "0x862922f69f198A81D10a640e2DFfd78f2991AA2b",
+    "factory": "0x64105Bad1140B479AceE10722AC795579ad39a4A",
+    "lens": "0xdCa223F9B3136aCe213AF1490Adf3DeE15F30CCe",
+    "usdc": "0xc2Bb2bC41349C56ED3E4d4aFd848102e8A037E41",
+    "entryPoint": "0x831356E9d6A306f17d22cbd1f341855ab2f62860",
+    "agentAddress": "0x0b8DD67cDF60D0B928012cEaF3653AF0Cb5B6953",
+    "relayer": "0x8d872AAc9153AB868B26D5fE4e53350EF7AB951D",
+    "owner": "0xa93C470B37e4fA1Dfc3cE1f989342E273657b43E",
+    "merchant": "0x92Fe6A09c1f0286B21466aF381b2375375BEbe76",
+    "attestor": "0xd9679D3f1D45A8Fba9537d5bF1eC511dB5FfFc23",
+    "watcher": "0x9e0F5A9F214e1b05791C8E47225C2cD77C74E5B3",
+    "attacker": "0xC1700341A13d45988AA414271EeDd0ef6419f5A5"
+  }
+}

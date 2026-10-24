@@ -18,6 +18,8 @@ export const accountOwnerAbi = parseAbi([
   'struct PolicyInput { uint48 validAfter; uint48 validUntil; GasPolicy gas; AssetInput[] assets; CallRuleInput[] calls; }',
   'function setPolicy(address agentKey, PolicyInput p)',
   'function setGlobalCap(address asset, uint128 burst, uint128 ratePerDay)',
+  'function setExploreCap(address asset, uint128 burst, uint128 ratePerDay)',
+  'function setExplorePerTxCap(address asset, uint128 cap)',
   'function setRecipient(address recipient, bool listed)',
   'function setTrackedSpenders(address[] spenders)',
   'function setAttestor(address attestor_)',

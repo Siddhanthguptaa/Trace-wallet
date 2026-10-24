@@ -119,7 +119,7 @@ function KeyCard({ k, wallet, isOwner }: { k: SessionKey; wallet: `0x${string}`;
 
         {isOwner && live ? (
           <>
-            <HoldButton disabled={writer.busy} onConfirm={() => writer.run('Revoke agent key', 'revokeKey', [k.agentKey])}>
+            <HoldButton disabled={writer.busy} onConfirm={() => writer.run('Revoke agent key', 'revoke', [k.agentKey])}>
               Hold to revoke this key
             </HoldButton>
             <form
@@ -146,7 +146,7 @@ function KeyCard({ k, wallet, isOwner }: { k: SessionKey; wallet: `0x${string}`;
               className={s.inline}
               onSubmit={(e) => {
                 e.preventDefault();
-                if (gasWei && gasWei > 0n) writer.run('Refill gas credit', 'refillGasCredit', [k.agentKey, gasWei]).then((ok) => ok && setGas(''));
+                if (gasWei && gasWei > 0n) writer.run('Refill gas credit', 'setGasCredit', [k.agentKey, k.gas.gasCredit + gasWei]).then((ok) => ok && setGas(''));
               }}
             >
               <TextField

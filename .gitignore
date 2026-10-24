@@ -35,3 +35,5 @@ Thumbs.db
 *.log
 *_slow.txt
 scripts/live/.state*
+scripts/live/owner_txs.json
+web/.env
