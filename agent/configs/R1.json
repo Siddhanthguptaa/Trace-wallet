@@ -1,0 +1,6 @@
+{
+  "id": "R1",
+  "kind": "eoa",
+  "description": "Raw agent key: an EOA holding the funds, no policy (the floor). EXPERIMENTS X1.",
+  "funding": "demo_policy.funding (usdc + eth on the agent EOA)"
+}

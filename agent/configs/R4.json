@@ -1,0 +1,9 @@
+{
+  "id": "R4",
+  "kind": "agent",
+  "description": "Ours with D3: R3 plus the attestor (attested payee tiers) and the account-wide exploration budget at its defaults (exploreCap 5% of globalCap, explorePerTxCap 1%). EXPERIMENTS X1.",
+  "attestor": true,
+  "exploration": true,
+  "sig1271Mode": "OWNER_PLUS_X402_VOUCHER",
+  "sig1271ModeNote": "X1 runs OWNER_PLUS_X402_VOUCHER with the local mock facilitator, labelled as such, until X3 decides (BUILD.md Demo policy)."
+}

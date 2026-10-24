@@ -1,0 +1,9 @@
+{
+  "id": "R2",
+  "kind": "naive",
+  "description": "Static allowlist + caps (what most teams build): NaiveAccount with the demo (target, selector) pairs and no argument rules, static recipients = the 3 shops on decoded transfer.to, perTxCap 10 USDC, calendar-day cap 20 USDC, isValidSignature accepts the session key. docs/api.md section 10-11. EXPERIMENTS X1.",
+  "allowlist": "demo_policy.rules (target + selector only)",
+  "recipients": "demo_policy.recipients",
+  "perTxCap": "demo_policy.r2.perTxCap",
+  "dailyCap": "demo_policy.r2.dailyCap"
+}

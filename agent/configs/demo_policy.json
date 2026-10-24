@@ -1,0 +1,27 @@
+{
+  "$comment": "Announced demo configuration (BUILD.md 'Demo policy', docs/api.md section 11). A config, not a measurement. Source of truth for the harness; contracts/test/unit/M1_Fixture.sol mirrors it. Amounts are base units (USDC 6 decimals, ETH wei) as decimal strings.",
+  "asset": { "symbol": "USDC", "decimals": 6 },
+  "globalCap": { "burst": "10000000", "ratePerDay": "10000000" },
+  "keyBucket": { "burst": "10000000", "ratePerDay": "10000000" },
+  "perTxCap": "10000000",
+  "exploreCap": { "burst": "500000", "ratePerDay": "500000" },
+  "explorePerTxCap": "200000",
+  "recipients": ["ApiSeller", "TicketShop", "GroceryShop"],
+  "validForSeconds": 518400,
+  "gasCredit": "1000000000000000",
+  "gas": { "maxCallGas": 500000, "maxVerificationGas": 300000, "maxPreVerificationGas": 100000, "maxFeePerGas": "1000000000" },
+  "opGas": { "verificationGasLimit": 250000, "callGasLimit": 300000, "preVerificationGas": 50000, "maxFeePerGas": "10000000", "maxPriorityFeePerGas": "10000000" },
+  "sig1271Mode": "OWNER_ONLY",
+  "shops": { "ticketPrice": "2000000", "apiPrice": "100000", "greedyPrice": "2000000" },
+  "funding": { "usdc": "100000000", "eth": "1000000000000000000", "deposit": "1000000000000000000" },
+  "rules": [
+    { "target": "USDC", "signature": "transfer(address,uint256)", "rules": [{ "argIndex": 0, "op": "PAYEE", "bound": "0" }] },
+    { "target": "USDC", "signature": "approve(address,uint256)", "rules": [{ "argIndex": 0, "op": "IN_RECIPIENTS", "bound": "0" }, { "argIndex": 1, "op": "LTE", "bound": "10000000" }] },
+    { "target": "TicketShop", "signature": "buy(uint256,address)", "rules": [{ "argIndex": 1, "op": "EQ_SELF", "bound": "0" }] },
+    { "target": "TicketShop", "signature": "setApprovalForAll(address,bool)", "rules": [{ "argIndex": 0, "op": "IN_RECIPIENTS", "bound": "0" }] },
+    { "target": "GroceryShop", "signature": "order(uint256,address)", "rules": [{ "argIndex": 0, "op": "LTE", "bound": "10000000" }, { "argIndex": 1, "op": "EQ_SELF", "bound": "0" }] }
+  ],
+  "trackedSpenders": ["TicketShop", "GroceryShop"],
+  "trackedNFTs": ["TicketShop"],
+  "r2": { "perTxCap": "10000000", "dailyCap": "20000000" }
+}

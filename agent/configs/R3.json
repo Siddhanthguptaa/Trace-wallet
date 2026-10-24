@@ -1,0 +1,9 @@
+{
+  "id": "R3",
+  "kind": "agent",
+  "description": "Ours without D3: AgentAccount with the demo policy, D1 one door + D2 effect metering + all guards. No attestor and the exploration track switched off (exploreCap 0, explorePerTxCap 0), so every unknown payee needs owner approval. EXPERIMENTS X1.",
+  "attestor": false,
+  "exploration": false,
+  "sig1271Mode": "OWNER_PLUS_X402_VOUCHER",
+  "sig1271ModeNote": "X1 runs OWNER_PLUS_X402_VOUCHER with the local mock facilitator, labelled as such, until X3 decides (BUILD.md Demo policy)."
+}

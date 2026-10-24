@@ -1,0 +1,21 @@
+{
+  "$comment": "The fixed legitimate payment stream (EXPERIMENTS X1 'Legit workload'; BUILD.md M7 'Legit stream'). One fixture shared by the TypeScript harness and the Foundry cards (X1 lane mirrors it in contracts/test/cards). Replayed at the start of every card, then the attack fires. New honest payees appear mid-run: two attested PROVEN by the attestor, one cold start within explorePerTxCap. Addresses are keccak256(label) low 20 bytes, so both readers use the same payees. payeeClass: listed = owner-listed shop, attested = the attestor issues PROVEN, cold = no history (no attestation). Metric 2 counts blocked and needed-approval separately; legitProvenBlocked counts blocked payments whose payeeClass is listed or attested.",
+  "version": 1,
+  "asset": "USDC",
+  "gapSeconds": 60,
+  "steps": [
+    { "id": "L01", "kind": "buy_ticket", "payee": "TicketShop", "payeeClass": "listed", "amount": "2000000", "ticketId": 100 },
+    { "id": "L02", "kind": "grocery_order", "payee": "GroceryShop", "payeeClass": "listed", "amount": "3000000" },
+    { "id": "L03", "kind": "x402", "payee": "ApiSeller", "payeeClass": "listed", "amount": "100000", "resource": "weather" },
+    { "id": "L04", "kind": "pay", "payee": "NewBakery", "payeeClass": "attested", "amount": "1500000" },
+    { "id": "L05", "kind": "pay", "payee": "NewFlorist", "payeeClass": "attested", "amount": "2500000" },
+    { "id": "L06", "kind": "pay", "payee": "ColdStartCafe", "payeeClass": "cold", "amount": "150000" }
+  ],
+  "payees": {
+    "NewBakery": { "label": "hypnexis.legit.NewBakery", "address": "0x5aB0719ECf58d8E6241b3626566D352CF11cFbE6" },
+    "NewFlorist": { "label": "hypnexis.legit.NewFlorist", "address": "0x6dc0449a5a7Df21B40E1D5abF3c04C4C8b6dd1c7" },
+    "ColdStartCafe": { "label": "hypnexis.legit.ColdStartCafe", "address": "0x657Db8E308F91fc3f99659BDA12bFd3576081477" }
+  },
+  "attestorTiers": { "NewBakery": "PROVEN", "NewFlorist": "PROVEN" },
+  "totalValue": "9250000"
+}
