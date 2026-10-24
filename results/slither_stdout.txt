@@ -1,0 +1,222 @@
+
+Detector: arbitrary-send-eth
+AgentAccount._call(address,uint256,bytes) (src/AgentAccount.sol#301-308) sends eth to arbitrary user
+	Dangerous calls:
+	- (ok,ret) = target.call{value: value}(data) (src/AgentAccount.sol#302)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#functions-that-send-ether-to-arbitrary-destinations
+
+Detector: incorrect-equality
+MeterLib._allowances(bool,mapping(address => MeterLib.Prepaid),address[],uint256[],uint256[],uint256) (src/modules/MeterModule.sol#212-228) uses a dangerous strict equality:
+	- b[x] == a[x] (src/modules/MeterModule.sol#222-223)
+FreezeStorage.bump(FreezeStorage.Window,uint256) (src/modules/FreezeModule.sol#76-88) uses a dangerous strict equality:
+	- wh + 1 == h (src/modules/FreezeModule.sol#80-81)
+FreezeTripwires.preCall(address,address,bytes4,address,bool,bool) (src/modules/FreezeModule.sol#99-115) uses a dangerous strict equality:
+	- seen[payee] == h (src/modules/FreezeModule.sol#111)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dangerous-strict-equalities
+
+Detector: uninitialized-local
+PolicyLens.checkPolicy(address,address,bytes,bytes).q (src/lens/PolicyLens.sol#73) is a local variable never initialized
+AgentAccount.policyCheck(address,bytes,bytes,bytes).ctx (src/AgentAccount.sol#324) is a local variable never initialized
+AgentAccount._validateAgent(PackedUserOperation,bytes32,AgentAccount.SigParts).ctx (src/AgentAccount.sol#184) is a local variable never initialized
+ApprovalLib.settle(bytes,address,Outflow[]).listed (src/modules/ApprovalModule.sol#91) is a local variable never initialized
+OneDoorModule._door1271(bytes32,bytes).ctx (src/modules/OneDoorModule.sol#74) is a local variable never initialized
+PolicyLens._checkApprovalOutflows(bytes,Outflow[]).listed (src/lens/PolicyLens.sol#169) is a local variable never initialized
+ApprovalLib.settle(bytes,address,Outflow[]).total (src/modules/ApprovalModule.sol#86) is a local variable never initialized
+AgentAccount.agentInnerExecute(OpContext,AgentCall,bytes).approvalState (src/AgentAccount.sol#277) is a local variable never initialized
+ApprovalLib.settle(bytes,address,Outflow[]).seen (src/modules/ApprovalModule.sol#82) is a local variable never initialized
+MeterLib._asset(bool,address,address[],uint256[],uint256[],uint256).c (src/modules/MeterModule.sol#202-203) is a local variable never initialized
+OneDoorLib.decodeVoucher(uint64,address,uint256,bytes).t (src/modules/OneDoorModule.sol#182) is a local variable never initialized
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#uninitialized-local-variables
+
+Detector: unused-return
+PayeeTierModule._attestedUntil(AccountStorage.Layout,address,bytes) (src/modules/PayeeTierModule.sol#79-112) ignores return value by (signer,err,None) = ECDSA.tryRecover(digest,uint8(v),r,s) (src/modules/PayeeTierModule.sol#110)
+OneDoorModule._door1271(bytes32,bytes) (src/modules/OneDoorModule.sol#71-78) ignores return value by (signer,err,None) = ECDSA.tryRecover(hash,signature) (src/modules/OneDoorModule.sol#72)
+MeterModule._meterSpender(AgentCall) (src/modules/MeterModule.sol#50-53) ignores return value by (None,w) = ArgRules.word(call.data,0) (src/modules/MeterModule.sol#52-53)
+AgentAccount._recoverOk(bytes32,bytes) (src/AgentAccount.sol#133-136) ignores return value by (signer,err,None) = ECDSA.tryRecover(hash,sig) (src/AgentAccount.sol#134)
+PolicyLens._evaluate(PolicyLens.Query) (src/lens/PolicyLens.sol#104-138) ignores return value by (None,s) = acct.sessionOf(q.agentKey) (src/lens/PolicyLens.sol#115)
+ApprovalLib.validate(bytes,bytes32,address,bytes4,address) (src/modules/ApprovalModule.sol#52-64) ignores return value by (signer,err,None) = ECDSA.tryRecover(digest,sig) (src/modules/ApprovalModule.sol#58-59)
+OneDoorLib.envelopeSigner(bytes32,bytes) (src/modules/OneDoorModule.sol#132-157) ignores return value by (signer,err,None) = ECDSA.tryRecover(hash,agentSig) (src/modules/OneDoorModule.sol#149)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unused-return
+
+Detector: missing-zero-check
+AgentAccount.constructor(IEntryPoint,address).admin_ (src/AgentAccount.sol#61) lacks a zero-check on :
+		- admin = admin_ (src/AgentAccount.sol#63)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-zero-address-validation
+
+Detector: calls-loop
+PolicyLens._checkCaps(IAgentAccountLensView,address,bool,Outflow[]) (src/lens/PolicyLens.sol#141-161) has external calls inside a loop: lim = acct.keyAsset(agentKey,asset) (src/lens/PolicyLens.sol#150)
+	Calls stack containing the loop:
+		PolicyLens.checkPolicy(address,address,bytes,bytes)
+		PolicyLens._evaluate(PolicyLens.Query)
+PolicyLens._checkCaps(IAgentAccountLensView,address,bool,Outflow[]) (src/lens/PolicyLens.sol#141-161) has external calls inside a loop: explore && amt > acct.explorePerTxCap(asset) (src/lens/PolicyLens.sol#153)
+	Calls stack containing the loop:
+		PolicyLens.checkPolicy(address,address,bytes,bytes)
+		PolicyLens._evaluate(PolicyLens.Query)
+PolicyLens._checkCaps(IAgentAccountLensView,address,bool,Outflow[]) (src/lens/PolicyLens.sol#141-161) has external calls inside a loop: amt > Buckets.availableAt(acct.globalBucket(asset),block.timestamp) (src/lens/PolicyLens.sol#155)
+	Calls stack containing the loop:
+		PolicyLens.checkPolicy(address,address,bytes,bytes)
+		PolicyLens._evaluate(PolicyLens.Query)
+PolicyLens._checkCaps(IAgentAccountLensView,address,bool,Outflow[]) (src/lens/PolicyLens.sol#141-161) has external calls inside a loop: explore && amt > Buckets.availableAt(acct.exploreBucket(asset),block.timestamp) (src/lens/PolicyLens.sol#156)
+	Calls stack containing the loop:
+		PolicyLens.checkPolicy(address,address,bytes,bytes)
+		PolicyLens._evaluate(PolicyLens.Query)
+PolicyLens._checkCaps(IAgentAccountLensView,address,bool,Outflow[]) (src/lens/PolicyLens.sol#141-161) has external calls inside a loop: lim = acct.keyAsset(agentKey,asset) (src/lens/PolicyLens.sol#150)
+	Calls stack containing the loop:
+		PolicyLens.checkPolicyEx(PolicyLens.Query)
+		PolicyLens._evaluate(PolicyLens.Query)
+PolicyLens._checkCaps(IAgentAccountLensView,address,bool,Outflow[]) (src/lens/PolicyLens.sol#141-161) has external calls inside a loop: explore && amt > acct.explorePerTxCap(asset) (src/lens/PolicyLens.sol#153)
+	Calls stack containing the loop:
+		PolicyLens.checkPolicyEx(PolicyLens.Query)
+		PolicyLens._evaluate(PolicyLens.Query)
+PolicyLens._checkCaps(IAgentAccountLensView,address,bool,Outflow[]) (src/lens/PolicyLens.sol#141-161) has external calls inside a loop: amt > Buckets.availableAt(acct.globalBucket(asset),block.timestamp) (src/lens/PolicyLens.sol#155)
+	Calls stack containing the loop:
+		PolicyLens.checkPolicyEx(PolicyLens.Query)
+		PolicyLens._evaluate(PolicyLens.Query)
+PolicyLens._checkCaps(IAgentAccountLensView,address,bool,Outflow[]) (src/lens/PolicyLens.sol#141-161) has external calls inside a loop: explore && amt > Buckets.availableAt(acct.exploreBucket(asset),block.timestamp) (src/lens/PolicyLens.sol#156)
+	Calls stack containing the loop:
+		PolicyLens.checkPolicyEx(PolicyLens.Query)
+		PolicyLens._evaluate(PolicyLens.Query)
+MeterLib._read(address,address[],address[],address) (src/modules/MeterModule.sol#171-189) has external calls inside a loop: v[k] = IERC20(a).balanceOf(address(this)) (src/modules/MeterModule.sol#180-181)
+	Calls stack containing the loop:
+		MeterLib.snapshot(address,address,address)
+MeterLib._read(address,address[],address[],address) (src/modules/MeterModule.sol#171-189) has external calls inside a loop: v[k + 1 + j] = IERC20(a).allowance(address(this),s) (src/modules/MeterModule.sol#186-188)
+	Calls stack containing the loop:
+		MeterLib.snapshot(address,address,address)
+MeterLib._read(address,address[],address[],address) (src/modules/MeterModule.sol#171-189) has external calls inside a loop: v[k] = IERC20(a).balanceOf(address(this)) (src/modules/MeterModule.sol#180-181)
+	Calls stack containing the loop:
+		MeterLib.settle(address,uint64,Track,address,address,bytes)
+MeterLib._read(address,address[],address[],address) (src/modules/MeterModule.sol#171-189) has external calls inside a loop: v[k + 1 + j] = IERC20(a).allowance(address(this),s) (src/modules/MeterModule.sol#186-188)
+	Calls stack containing the loop:
+		MeterLib.settle(address,uint64,Track,address,address,bytes)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation/#calls-inside-a-loop
+
+Detector: reentrancy-events
+Reentrancy in AgentAccount.agentInnerExecute(OpContext,AgentCall,bytes) (src/AgentAccount.sol#269-292):
+	External calls:
+	- (ok,ret) = call.target.call{value: call.value}(call.data) (src/AgentAccount.sol#281)
+	Event emitted after the call(s):
+	- ApprovedExecuted(digest,payee,outflows) (src/modules/ApprovalModule.sol#101-102)
+		- _approvalAfter(ctx,call,approval,approvalState,outflows) (src/AgentAccount.sol#290)
+Reentrancy in AgentAccountFactory.createAccount(address,uint256) (src/AgentAccountFactory.sol#34-40):
+	External calls:
+	- account.initialize(owner) (src/AgentAccountFactory.sol#38)
+	Event emitted after the call(s):
+	- AccountCreated(address(account),owner,salt) (src/AgentAccountFactory.sol#39)
+Reentrancy in AgentAccount.executeUserOp(PackedUserOperation,bytes32) (src/AgentAccount.sol#224-257):
+	External calls:
+	- outflows = this.agentInnerExecute(ctx,call,p.approval) (src/AgentAccount.sol#240-254)
+	Event emitted after the call(s):
+	- AgentFrozen(ctx.agentKey,address(this),ctx.userOpHash) (src/AgentAccount.sol#263)
+		- _blocked(ctx,call,err,sel == revert TripwireTripped(uint8).selector) (src/AgentAccount.sol#253)
+	- Decision(ctx.userOpHash,ctx.agentKey,call.target,call.selector,call.payee,ctx.tier,ctx.track,outflows) (src/AgentAccount.sol#241-243)
+	- PolicyBlocked(ctx.userOpHash,ctx.agentKey,call.target,call.selector,err) (src/AgentAccount.sol#265)
+		- _blocked(ctx,call,err,sel == revert TripwireTripped(uint8).selector) (src/AgentAccount.sol#253)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-4
+
+Detector: timestamp
+PolicyLens._evaluate(PolicyLens.Query) (src/lens/PolicyLens.sol#104-138) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp <= s.validAfter || block.timestamp > s.validUntil (src/lens/PolicyLens.sol#116)
+	- block.timestamp > r.validUntil (src/lens/PolicyLens.sol#121)
+PolicyLens._checkCaps(IAgentAccountLensView,address,bool,Outflow[]) (src/lens/PolicyLens.sol#141-161) uses timestamp for comparisons
+	Dangerous comparisons:
+	- amt > Buckets.availableAt(lim.bucket,block.timestamp) (src/lens/PolicyLens.sol#154)
+	- amt > Buckets.availableAt(acct.globalBucket(asset),block.timestamp) (src/lens/PolicyLens.sol#155)
+	- explore && amt > Buckets.availableAt(acct.exploreBucket(asset),block.timestamp) (src/lens/PolicyLens.sol#156)
+FreezeStorage.bump(FreezeStorage.Window,uint256) (src/modules/FreezeModule.sol#76-88) uses timestamp for comparisons
+	Dangerous comparisons:
+	- wh != h (src/modules/FreezeModule.sol#79-80)
+	- wh + 1 == h (src/modules/FreezeModule.sol#80-81)
+FreezeTripwires.preCall(address,address,bytes4,address,bool,bool) (src/modules/FreezeModule.sol#99-115) uses timestamp for comparisons
+	Dangerous comparisons:
+	- seen[payee] == h (src/modules/FreezeModule.sol#111)
+OneDoorLib.envelopeSigner(bytes32,bytes) (src/modules/OneDoorModule.sol#132-157) uses timestamp for comparisons
+	Dangerous comparisons:
+	- err != ECDSA.RecoverError.NoError || l.keyToSession[signer] != sid || s.revoked || block.timestamp <= s.validAfter || block.timestamp > s.validUntil (src/modules/OneDoorModule.sol#153-154)
+OneDoorLib.register(uint64,Track,address,bytes) (src/modules/OneDoorModule.sol#193-203) uses timestamp for comparisons
+	Dangerous comparisons:
+	- validBefore <= block.timestamp || validBefore > block.timestamp + VOUCHER_MAX_TTL (src/modules/OneDoorModule.sol#196)
+OneDoorLib.close(bytes32) (src/modules/OneDoorModule.sol#208-220) uses timestamp for comparisons
+	Dangerous comparisons:
+	- block.timestamp < v.validBefore (src/modules/OneDoorModule.sol#216)
+RecoveryModule.proposeRecovery(address) (src/modules/RecoveryModule.sol#103-129) uses timestamp for comparisons
+	Dangerous comparisons:
+	- r.approvalCount >= THRESHOLD || block.timestamp < uint256(r.proposedAt) + RECOVERY_DELAY (src/modules/RecoveryModule.sol#113)
+RecoveryModule.executeRecovery() (src/modules/RecoveryModule.sol#144-154) uses timestamp for comparisons
+	Dangerous comparisons:
+	- r.approvalCount < THRESHOLD || block.timestamp < uint256(r.proposedAt) + RECOVERY_DELAY (src/modules/RecoveryModule.sol#148)
+AgentPaymaster.available(address) (src/paymaster/AgentPaymaster.sol#155-160) uses timestamp for comparisons
+	Dangerous comparisons:
+	- lvl > a.pending (src/paymaster/AgentPaymaster.sol#159)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+
+Detector: assembly
+AgentAccount.fallback() (src/AgentAccount.sol#80-89) uses assembly
+	- INLINE ASM (src/AgentAccount.sol#82-88)
+AgentAccount.executeUserOp(PackedUserOperation,bytes32) (src/AgentAccount.sol#224-257) uses assembly
+	- INLINE ASM (src/AgentAccount.sol#249-251)
+AgentAccount._call(address,uint256,bytes) (src/AgentAccount.sol#301-308) uses assembly
+	- INLINE ASM (src/AgentAccount.sol#304-306)
+AccountCommon._isAgentExecuting() (src/AgentAccountBase.sol#114-119) uses assembly
+	- INLINE ASM (src/AgentAccountBase.sol#116-118)
+AccountCommon._setAgentExecuting(bool) (src/AgentAccountBase.sol#121-126) uses assembly
+	- INLINE ASM (src/AgentAccountBase.sol#123-125)
+AccountCommon._setInnerArmed(bool) (src/AgentAccountBase.sol#132-137) uses assembly
+	- INLINE ASM (src/AgentAccountBase.sol#134-136)
+AccountCommon._isInnerArmed() (src/AgentAccountBase.sol#139-144) uses assembly
+	- INLINE ASM (src/AgentAccountBase.sol#141-143)
+PolicyLens._decoded(IAgentAccountLensView,address,bytes) (src/lens/PolicyLens.sol#182-205) uses assembly
+	- INLINE ASM (src/lens/PolicyLens.sol#202-204)
+PolicyLens._sumPerAsset(Outflow[]) (src/lens/PolicyLens.sol#208-220) uses assembly
+	- INLINE ASM (src/lens/PolicyLens.sol#217-219)
+PolicyLens._tail4(bytes) (src/lens/PolicyLens.sol#222-228) uses assembly
+	- INLINE ASM (src/lens/PolicyLens.sol#225-227)
+PolicyLens._word(bytes,uint256) (src/lens/PolicyLens.sol#230-234) uses assembly
+	- INLINE ASM (src/lens/PolicyLens.sol#231-233)
+ApprovalLib.store() (src/modules/ApprovalModule.sol#31-36) uses assembly
+	- INLINE ASM (src/modules/ApprovalModule.sol#34-36)
+FreezeStorage.layout() (src/modules/FreezeModule.sol#55-59) uses assembly
+	- INLINE ASM (src/modules/FreezeModule.sol#57-59)
+MeterLib.meterStorage() (src/modules/MeterModule.sol#97-100) uses assembly
+	- INLINE ASM (src/modules/MeterModule.sol#99-100)
+MeterLib.settle(address,uint64,Track,address,address,bytes) (src/modules/MeterModule.sol#109-134) uses assembly
+	- INLINE ASM (src/modules/MeterModule.sol#128-129)
+PayeeTierModule._payeeTierStorage() (src/modules/PayeeTierModule.sol#46-51) uses assembly
+	- INLINE ASM (src/modules/PayeeTierModule.sol#48-50)
+PayeeTierModule._attestedUntil(AccountStorage.Layout,address,bytes) (src/modules/PayeeTierModule.sol#79-112) uses assembly
+	- INLINE ASM (src/modules/PayeeTierModule.sol#94-103)
+RecoveryStorage.layout() (src/modules/RecoveryModule.sol#29-34) uses assembly
+	- INLINE ASM (src/modules/RecoveryModule.sol#31-33)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#assembly-usage
+
+Detector: cyclomatic-complexity
+ApprovalLib.settle(bytes,address,Outflow[]) (src/modules/ApprovalModule.sol#77-102) has a high cyclomatic complexity (12).
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#cyclomatic-complexity
+
+Detector: dead-code
+ApprovalModule._approvalStorage() (src/modules/ApprovalModule.sol#133-134) is never used and should be removed
+MeterModule._meterStorage() (src/modules/MeterModule.sol#24-26) is never used and should be removed
+PayeeTierModule._payeeTierStorage() (src/modules/PayeeTierModule.sol#46-51) is never used and should be removed
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
+
+Detector: low-level-calls
+Low level call in AgentAccount.agentInnerExecute(OpContext,AgentCall,bytes) (src/AgentAccount.sol#269-292):
+	- (ok,ret) = call.target.call{value: call.value}(call.data) (src/AgentAccount.sol#281)
+Low level call in AgentAccount._call(address,uint256,bytes) (src/AgentAccount.sol#301-308):
+	- (ok,ret) = target.call{value: value}(data) (src/AgentAccount.sol#302)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#low-level-calls
+
+Detector: naming-convention
+Function IERC3009Token.DOMAIN_SEPARATOR() (src/modules/OneDoorModule.sol#27) is not in mixedCase
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+
+Detector: unused-state
+MeterModule.METER_SLOT (src/modules/MeterModule.sol#21-22) is never used in AgentAccount (src/AgentAccount.sol#46-360)
+OneDoorModule.ONEDOOR_SLOT (src/modules/OneDoorModule.sol#59) is never used in AgentAccount (src/AgentAccount.sol#46-360)
+ApprovalModule.APPROVAL_SLOT (src/modules/ApprovalModule.sol#131-133) is never used in AgentAccount (src/AgentAccount.sol#46-360)
+PolicyLens.EXECUTE_USER_OP (src/lens/PolicyLens.sol#42) is never used in PolicyLens (src/lens/PolicyLens.sol#41-235)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unused-state-variable
+. analyzed (81 contracts with 102 detectors), 77 result(s) found
+'forge clean' running (wd: C:\Users\siddh\Downloads\Hypnexis\Hypnexis\contracts)
+'forge config --json' running
+'forge build --build-info --deny never --skip ./test/** ./script/** --force' running (wd: C:\Users\siddh\Downloads\Hypnexis\Hypnexis\contracts)

@@ -131,8 +131,8 @@
               1.0
             ]
           },
-          "meanOpsToFreeze": 21.81,
-          "meanLossBeforeFreezeBaseUnits": 13948993.8,
+          "meanOpsToFreeze": 21.62,
+          "meanLossBeforeFreezeBaseUnits": 13860078.6,
           "maxLossBaseUnits": 17963818,
           "freezeTriggers": {
             "T3_strikes": 15,
@@ -234,7 +234,7 @@
               1.0
             ]
           },
-          "meanOpsToFreeze": 7.9,
+          "meanOpsToFreeze": 4.0,
           "meanLossBeforeFreezeBaseUnits": 0.0,
           "maxLossBaseUnits": 0,
           "freezeTriggers": {
@@ -703,12 +703,12 @@
         "hijackRuns": 180,
         "reachedWalletRuns": 120,
         "detection": {
-          "hit": 113,
+          "hit": 115,
           "runs": 120,
-          "rate": 0.9417,
+          "rate": 0.9583,
           "ci95": [
-            0.8845,
-            0.9715
+            0.9062,
+            0.9821
           ]
         },
         "containment": {
@@ -732,7 +732,7 @@
         },
         "maxAttackerGainBaseUnits": 17963818,
         "maxUnprovenGainBaseUnits": 496200,
-        "maxLossBeforeFreezeBaseUnits": 17763660,
+        "maxLossBeforeFreezeBaseUnits": 17676370,
         "globalCap": 20000000,
         "exploreCap": 1000000,
         "lossAssertHeld": true,
@@ -760,7 +760,7 @@
               1.0
             ]
           },
-          "meanOpsToFreeze": 9.55,
+          "meanOpsToFreeze": 7.55,
           "meanLossBeforeFreezeBaseUnits": 451570.0,
           "maxLossBaseUnits": 496200,
           "freezeTriggers": {
@@ -788,8 +788,8 @@
               1.0
             ]
           },
-          "meanOpsToFreeze": 28.8,
-          "meanLossBeforeFreezeBaseUnits": 15770904.3,
+          "meanOpsToFreeze": 26.13,
+          "meanLossBeforeFreezeBaseUnits": 14790729.8,
           "maxLossBaseUnits": 17963818,
           "freezeTriggers": {
             "revert_cusum": 11,
@@ -817,9 +817,9 @@
               1.0
             ]
           },
-          "meanOpsToFreeze": 9.0,
-          "meanLossBeforeFreezeBaseUnits": 461880.0,
-          "maxLossBaseUnits": 495000,
+          "meanOpsToFreeze": 7.25,
+          "meanLossBeforeFreezeBaseUnits": 450270.0,
+          "maxLossBaseUnits": 493400,
           "freezeTriggers": {
             "revert_streak": 20
           }
@@ -891,7 +891,7 @@
               1.0
             ]
           },
-          "meanOpsToFreeze": 7.55,
+          "meanOpsToFreeze": 4.0,
           "meanLossBeforeFreezeBaseUnits": 0.0,
           "maxLossBaseUnits": 0,
           "freezeTriggers": {
@@ -953,12 +953,12 @@
           "runs": 20,
           "reachedWallet": 20,
           "detection": {
-            "hit": 18,
+            "hit": 20,
             "runs": 20,
-            "rate": 0.9,
+            "rate": 1.0,
             "ci95": [
-              0.699,
-              0.9721
+              0.8389,
+              1.0
             ]
           },
           "containment": {
@@ -970,11 +970,11 @@
               1.0
             ]
           },
-          "meanOpsToFreeze": 7.78,
-          "meanLossBeforeFreezeBaseUnits": 8944444.4,
+          "meanOpsToFreeze": 6.0,
+          "meanLossBeforeFreezeBaseUnits": 8500000.0,
           "maxLossBaseUnits": 10000000,
           "freezeTriggers": {
-            "revert_streak": 18
+            "revert_streak": 20
           }
         }
       },

@@ -11,11 +11,11 @@
   "ok": true,
   "details": {
     "approved": {
-      "id": "a0e11fdc6ad4e6fcf93085e2",
+      "id": "0d1e79f7481f61f6cfb42fc3",
       "cliExit": 0,
-      "cliStdout": "{\"http\":200,\"id\":\"a0e11fdc6ad4e6fcf93085e2\",\"status\":\"executed\",\"account\":\"0x88e0111ab32d99d402e95e4035982982cd424ace\",\"chainId\":31337,\"agentKey\":\"0x70997970C51812dc3A010C7d01b50e0d17dc79C8\",\"userOpHash\":\"0x399617de1097ef47ba84a778b5707112a59ee8eb0c6601005aaa04beda924eb3\",\"approvalHash\":\"0x1e79d74c5286e52ae63cf64df537b7e22fd5f8d0f2eac74c5162718e74d163e2\",\"nonce\":\"50930204793815341472647614845042490728161331526673935034370110067427831185408\",\"target\":\"0x7ef8E99980Da5bcEDcF7C10f41E55f759F6A174B\",\"selector\":\"0x21603f43\",\"payee\":\"0x0000000000000000000000000000000000000000\",\"maxOutflow\":[{\"asset\":\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\",\"amount\":\"3000000\"}],\"validUntil\":1792872969,\"note\":\"buy 1 ticket (agent text, untrusted)\",\"simulation\":{\"mode\":\"eth_call\",\"ok\":true,\"outflows\":[{\"asset\":\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\",\"amount\":\"3000000\"}],\"declared\":null,\"gasUsed\":\"37693\",\"tracked\":{\"assets\":[\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\"],\"spenders\":[\"0x7ef8E99980Da5bcEDcF7C10f41E55f759F6A174B\"],\"nfts\":[]},\"warnings\":[]},\"txHash\":\"0xeeb9ce5f841b9c0bd03a681490fb837429978ac15d60da1e84aa92a5788400fa\",\"success\":true,\"blocked\":false,\"outflows\":[{\"asset\":\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\",\"amount\":\"3000000\"}],\"createdAt\":1792869369,\"updatedAt\":1792869371}",
+      "cliStdout": "{\"http\":200,\"id\":\"0d1e79f7481f61f6cfb42fc3\",\"status\":\"executed\",\"account\":\"0x88e0111ab32d99d402e95e4035982982cd424ace\",\"chainId\":31337,\"agentKey\":\"0x70997970C51812dc3A010C7d01b50e0d17dc79C8\",\"userOpHash\":\"0x399617de1097ef47ba84a778b5707112a59ee8eb0c6601005aaa04beda924eb3\",\"approvalHash\":\"0x4753db3456c4d7245585baea6511d046c0e5a9ab55be38e9b06ba5c19f482f63\",\"nonce\":\"50930204793815341472647614845042490728161331526673935034370110067427831185408\",\"target\":\"0x7ef8E99980Da5bcEDcF7C10f41E55f759F6A174B\",\"selector\":\"0x21603f43\",\"payee\":\"0x0000000000000000000000000000000000000000\",\"maxOutflow\":[{\"asset\":\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\",\"amount\":\"3000000\"}],\"validUntil\":1792875249,\"note\":\"buy 1 ticket (agent text, untrusted)\",\"simulation\":{\"mode\":\"eth_call\",\"ok\":true,\"outflows\":[{\"asset\":\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\",\"amount\":\"3000000\"}],\"declared\":null,\"gasUsed\":\"37693\",\"tracked\":{\"assets\":[\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\"],\"spenders\":[\"0x7ef8E99980Da5bcEDcF7C10f41E55f759F6A174B\"],\"nfts\":[]},\"warnings\":[]},\"txHash\":\"0x170910c93fb13d74f8969b0595f3ce5e3a67ca89fb5fcbfa16b96f13071cf94c\",\"success\":true,\"blocked\":false,\"outflows\":[{\"asset\":\"0x8A791620dd6260079BF849Dc5567aDC3F2FdC318\",\"amount\":\"3000000\"}],\"createdAt\":1792871649,\"updatedAt\":1792871650}",
       "status": "executed",
-      "txHash": "0xeeb9ce5f841b9c0bd03a681490fb837429978ac15d60da1e84aa92a5788400fa",
+      "txHash": "0x170910c93fb13d74f8969b0595f3ce5e3a67ca89fb5fcbfa16b96f13071cf94c",
       "simulatedOutflow": "3000000",
       "measuredOutflow": "3000000",
       "shopReceived": "3000000",
@@ -34,7 +34,7 @@
       "payeeBalance": "500000"
     },
     "tampered": {
-      "id": "ec579ac96758c9fe9eb5d510",
+      "id": "878bcffbc1864d803f4495af",
       "maxOutflow": [
         {
           "asset": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",

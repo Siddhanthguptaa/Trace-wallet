@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.live.example
 
 # node
 node_modules/
@@ -33,3 +34,4 @@ Thumbs.db
 # logs & scratch
 *.log
 *_slow.txt
+scripts/live/.state*

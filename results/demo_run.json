@@ -2,13 +2,13 @@
   "ok": true,
   "chainMode": "local",
   "rpcUrl": "http://127.0.0.1:8545",
-  "startedAt": "2026-10-24T19:14:27.538Z",
-  "finishedAt": "2026-10-24T19:16:46.409Z",
+  "startedAt": "2026-10-24T19:53:23.739Z",
+  "finishedAt": "2026-10-24T19:54:47.400Z",
   "beats": [
     {
       "beat": "00_x2.ts",
       "ok": true,
-      "ms": 50848,
+      "ms": 7847,
       "summary": "fork @53026000: naive lost 100.000000 USDC with 0 UserOps; one door lost 0.000000 (0xffffffff)",
       "details": {
         "local": {
@@ -93,7 +93,7 @@
     {
       "beat": "10_core.ts",
       "ok": true,
-      "ms": 7353,
+      "ms": 4865,
       "summary": "core: 31/31 checks ok",
       "details": {
         "file": "results/m1_core_e2e.json",
@@ -105,7 +105,7 @@
     {
       "beat": "20_meter.ts",
       "ok": true,
-      "ms": 23748,
+      "ms": 20599,
       "summary": "meter: 11/11 checks ok",
       "details": {
         "file": "results/m2_meter_e2e.json",
@@ -117,7 +117,7 @@
     {
       "beat": "30_one_door.ts",
       "ok": true,
-      "ms": 7219,
+      "ms": 4460,
       "summary": "one door: 19/19 checks ok",
       "details": {
         "file": "results/m3_onedoor_e2e.json",
@@ -129,7 +129,7 @@
     {
       "beat": "40_attestor.ts",
       "ok": true,
-      "ms": 6119,
+      "ms": 3987,
       "summary": "attestor: proven=true flagged=true cold=true agentIgnored=true",
       "details": {
         "file": "results/m6_attestor_e2e.json",
@@ -139,7 +139,7 @@
     {
       "beat": "50_approval.ts",
       "ok": true,
-      "ms": 15450,
+      "ms": 10202,
       "summary": "approval: approved=executed tampered=reverted replay=rejected; account checks 13/13",
       "details": {
         "e2e": "results/m5_approval_e2e.json",
@@ -149,7 +149,7 @@
     {
       "beat": "55_freeze.ts",
       "ok": true,
-      "ms": 6586,
+      "ms": 5766,
       "summary": "freeze: 14/14 checks ok",
       "details": {
         "file": "results/m10_freeze_e2e.json",
@@ -161,7 +161,7 @@
     {
       "beat": "56_recovery.ts",
       "ok": true,
-      "ms": 11534,
+      "ms": 8184,
       "summary": "recovery: 26/26 checks ok",
       "details": {
         "file": "results/m11_recovery_e2e.json",
@@ -173,7 +173,7 @@
     {
       "beat": "57_paymaster.ts",
       "ok": true,
-      "ms": 9571,
+      "ms": 6877,
       "summary": "paymaster: 14/14 checks ok",
       "details": {
         "file": "results/m12_paymaster_e2e.json",
@@ -185,7 +185,7 @@
     {
       "beat": "58_authorization_fuzz.ts",
       "ok": true,
-      "ms": 18,
+      "ms": 7,
       "summary": "I11 funds move only with owner / in-policy agent / recovery approval: 3 invariants passed, 0 failed over 772 fuzz runs; 0 forged ops accepted",
       "details": {
         "forge": "results/forge_summary_i11.json",
@@ -193,9 +193,40 @@
       }
     },
     {
+      "beat": "59_hijack_live.ts",
+      "ok": true,
+      "ms": 10484,
+      "summary": "live hijack: A unproven drain gained 0.40 USDC (frozen at op 5); B forged-PROVEN drain gained 5.00 USDC (frozen at op 4); B forged-PROVEN drain, no detector gained 9.00 USDC; daily limit 20.00 USDC",
+      "details": {
+        "phases": [
+          {
+            "name": "A unproven drain",
+            "mode": "combined",
+            "gainBaseUnits": "400000",
+            "frozenAtOp": 5,
+            "ops": 30
+          },
+          {
+            "name": "B forged-PROVEN drain",
+            "mode": "combined",
+            "gainBaseUnits": "5000000",
+            "frozenAtOp": 4,
+            "ops": 14
+          },
+          {
+            "name": "B forged-PROVEN drain, no detector",
+            "mode": "none",
+            "gainBaseUnits": "9000000",
+            "frozenAtOp": null,
+            "ops": 14
+          }
+        ]
+      }
+    },
+    {
       "beat": "60_x1.ts",
       "ok": true,
-      "ms": 12,
+      "ms": 5,
       "summary": "13 cards x R1-R4: cards beyond policy R1=11 R2=7 R3=0 R4=0",
       "details": {
         "file": "results/x1_table.json",
@@ -250,7 +281,7 @@
     {
       "beat": "65_x6.ts",
       "ok": true,
-      "ms": 14,
+      "ms": 4,
       "summary": "X6 (combined): detection 116/120, false freezes 0/80, max gain 17963818 <= 20000000 in 180 hijack runs",
       "details": {
         "file": "results/x6_detection.json"
